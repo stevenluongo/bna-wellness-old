@@ -18,8 +18,6 @@ export default function withAuth<T extends WithAuthProps = WithAuthProps>(
 
     if (status === "loading") return null;
 
-    console.log(data);
-
     return <Component {...(props as T)} />;
   };
   return ComponentWithAuth;

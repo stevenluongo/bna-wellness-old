@@ -28,6 +28,18 @@ model User {
   replies   Reply[]
 }
 
+model Client {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  firstName String
+  lastName  String
+  email     String?
+  image     String?
+  age       Int?
+  homePhone String?
+  cellPhone String?
+  notes     String[]
+}
 
 
 enum UserRole {

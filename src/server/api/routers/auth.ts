@@ -14,6 +14,7 @@ const inputSchema = z.object({
   password: z.string(),
   firstName: z.string(),
   lastName: z.string(),
+  role: z.enum(["ADMIN", "DEFAULT"]),
 });
 
 export const authRouter = createTRPCRouter({
@@ -27,12 +28,14 @@ export const authRouter = createTRPCRouter({
         lastName: input.lastName,
         hash,
         salt,
+        role: input.role,
       },
       select: {
         id: true,
         username: true,
         firstName: true,
         lastName: true,
+        role: true,
       },
     });
 

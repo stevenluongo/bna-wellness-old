@@ -9,7 +9,7 @@ export default function withAuth<T extends WithAuthProps = WithAuthProps>(
   Component: React.ComponentType<T>
 ) {
   const ComponentWithAuth = (props: Omit<T, keyof WithAuthProps>) => {
-    const { status } = useSession({
+    const { status, data } = useSession({
       required: true,
       onUnauthenticated() {
         void signIn();
@@ -17,6 +17,8 @@ export default function withAuth<T extends WithAuthProps = WithAuthProps>(
     });
 
     if (status === "loading") return null;
+
+    console.log(data);
 
     return <Component {...(props as T)} />;
   };

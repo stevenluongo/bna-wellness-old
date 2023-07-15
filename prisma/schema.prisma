@@ -22,20 +22,23 @@ model User {
   lastName  String
   hash      String
   salt      String
-  role      UserRole  @default(default)
-  title     UserTitle @default(trainer)
+  role      UserRole  @default(DEFAULT)
+  title     UserTitle @default(TRAINER)
   messages  Message[]
   replies   Reply[]
 }
 
+
+
 enum UserRole {
-  admin
-  default
+  ADMIN
+  DEFAULT
 }
 
 enum UserTitle {
-  trainer
-  owner
+  TRAINER
+  OWNER
+  THERAPIST
 }
 
 model Message {

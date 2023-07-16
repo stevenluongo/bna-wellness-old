@@ -8,6 +8,7 @@ import { useZodForm } from "~/utils/useZodForm";
 import Autocomplete from "@mui/material/Autocomplete";
 import TextField from "@mui/material/TextField";
 import { Client } from "@prisma/client";
+import { useRouter } from "next/router";
 
 type ModalProps = {
   open: boolean;
@@ -39,8 +40,35 @@ export default function EditClientModal(props: ModalProps) {
 
   const updateClientMutation = api.clients.update.useMutation({
     async onMutate(newClient) {
+      // cancel queries
       await utils.clients.all.cancel();
 
+      const client = utils.clients.id.getData({
+        id: newClient.id,
+      });
+
+      if (!client) return;
+
+      // fetch all clients
+      const allClients = await utils.clients.all.fetch();
+
+      if (!allClients) return;
+
+      // update all clients
+      utils.clients.all.setData(
+        undefined,
+        allClients.map((c) => {
+          if (c.id === client.id) {
+            return {
+              ...c,
+              ...newClient,
+            };
+          }
+          return c;
+        })
+      );
+
+      // update client
       utils.clients.id.setData(
         { id: client.id },
         {
@@ -49,6 +77,7 @@ export default function EditClientModal(props: ModalProps) {
         }
       );
 
+      // close modal
       handleChange(false);
     },
     onError(error) {

@@ -6,47 +6,26 @@ import {
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table";
+import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import CreateClientModal from "~/components/clients/createClientModal";
 import withAuth from "~/hocs/withAuth";
 import { ssgInit } from "~/server/ssg-init";
 import { api } from "~/utils/api";
 
-type Person = {
-  firstName: string;
-  lastName: string;
-  age: number;
-  visits: number;
-  status: string;
-  progress: number;
-};
-
-const defaultData: Person[] = [
-  {
-    firstName: "tanner",
-    lastName: "linsley",
-    age: 24,
-    visits: 100,
-    status: "In Relationship",
-    progress: 50,
-  },
-  {
-    firstName: "tandy",
-    lastName: "miller",
-    age: 40,
-    visits: 40,
-    status: "Single",
-    progress: 80,
-  },
-  {
-    firstName: "joe",
-    lastName: "dirte",
-    age: 45,
-    visits: 20,
-    status: "Complicated",
-    progress: 10,
-  },
-];
+// model Client {
+//   id            String         @id @default(cuid())
+//   createdAt     DateTime       @default(now())
+//   firstName     String
+//   lastName      String
+//   email         String?
+//   image         String?
+//   age           Int?
+//   homePhone     String?
+//   cellPhone     String?
+//   notes         String[]
+//   subscriptions Subscription[]
+// }
 
 const columnHelper = createColumnHelper<Client>();
 
@@ -70,6 +49,8 @@ const columns = [
 ];
 const Clients = () => {
   const [open, setOpen] = useState(false);
+
+  const router = useRouter();
 
   const utils = api.useContext();
 
@@ -119,7 +100,10 @@ const Clients = () => {
         </thead>
         <tbody>
           {table.getRowModel().rows.map((row) => (
-            <tr key={row.id}>
+            <tr
+              onClick={() => router.push(`/clients/${row.original.id}`)}
+              key={row.id}
+            >
               {row.getVisibleCells().map((cell) => (
                 <td key={cell.id}>
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}

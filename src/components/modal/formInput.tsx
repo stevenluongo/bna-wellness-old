@@ -1,31 +1,17 @@
-import { z } from "zod";
-
-// validation schema is used by server
-export const createMembershipValidationSchema = z.object({
-  name: z.string(),
-  description: z.string(),
-  unitAmount: z.number(),
-  interval: z.enum(["day", "week", "month", "year"]),
-  intervalCount: z.number(),
-  stripeProductId: z.string(),
-  stripePriceId: z.string(),
-});
-
-type CreateMembershipValidation = z.infer<
-  typeof createMembershipValidationSchema
->;
-
 export const FormInput = ({
   methods,
   attribute,
   placeholder,
   type,
+  value,
 }: {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   methods: any;
   attribute: string;
   placeholder: string;
   type?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  value?: any;
 }) => {
   return (
     <div>
@@ -43,6 +29,7 @@ export const FormInput = ({
         placeholder={placeholder}
         required
         type={type}
+        value={value}
       />
       {methods.formState.errors[attribute]?.message && (
         <p className="text-red-700">

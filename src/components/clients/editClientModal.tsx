@@ -7,23 +7,17 @@ import { FormSubmit } from "../modal/formSubmit";
 import { useZodForm } from "~/utils/useZodForm";
 import Autocomplete from "@mui/material/Autocomplete";
 import TextField from "@mui/material/TextField";
-
-const people = [
-  { id: 1, name: "Wade Cooper" },
-  { id: 2, name: "Arlene Mccoy" },
-  { id: 3, name: "Devon Webb" },
-  { id: 4, name: "Tom Cook" },
-  { id: 5, name: "Tanya Fox" },
-  { id: 6, name: "Hellen Schmidt" },
-];
+import { Client } from "@prisma/client";
 
 type ModalProps = {
   open: boolean;
   handleChange: (v: boolean) => void;
+  client: Client;
 };
 
 // validation schema is used by server
-export const createClientValidationSchema = z.object({
+export const editClientValidationSchema = z.object({
+  id: z.string(),
   firstName: z.string(),
   lastName: z.string(),
   email: z.string().email().nullable(),
@@ -34,43 +28,27 @@ export const createClientValidationSchema = z.object({
   image: z.string().nullable(),
 });
 
-export default function CreateClientModal(props: ModalProps) {
-  const [selectedPeople, setSelectedPeople] = useState([people[2], people[4]]);
+export default function EditClientModal(props: ModalProps) {
   const [notes, setNotes] = useState<string[]>([]);
-  const [query, setQuery] = useState("");
 
-  const filteredPeople =
-    query === ""
-      ? people
-      : people.filter((person) =>
-          person.name
-            .toLowerCase()
-            .replace(/\s+/g, "")
-            .includes(query.toLowerCase().replace(/\s+/g, ""))
-        );
-  const { handleChange } = props;
+  const { handleChange, client } = props;
 
   const utils = api.useContext();
 
   const [error, setError] = useState<string>("");
 
-  const createClientMutation = api.clients.create.useMutation({
-    async onMutate(client) {
+  const updateClientMutation = api.clients.update.useMutation({
+    async onMutate(newClient) {
       await utils.clients.all.cancel();
-      const allClients = utils.clients.all.getData();
-      if (!allClients) {
-        return;
-      }
-      utils.clients.all.setData(undefined, [
-        ...allClients,
-        {
-          createdAt: new Date(),
-          id: `${Math.random()}`,
-          ...client,
-        },
-      ]);
 
-      methods.reset();
+      utils.clients.id.setData(
+        { id: client.id },
+        {
+          ...client,
+          ...newClient,
+        }
+      );
+
       handleChange(false);
     },
     onError(error) {
@@ -79,16 +57,17 @@ export default function CreateClientModal(props: ModalProps) {
   });
 
   const methods = useZodForm({
-    schema: createClientValidationSchema,
+    schema: editClientValidationSchema,
     defaultValues: {
-      firstName: "",
-      lastName: "",
-      email: "",
-      age: 0,
-      homePhone: "",
-      cellPhone: "",
-      notes: [],
-      image: null,
+      id: client.id,
+      firstName: client.firstName,
+      lastName: client.lastName,
+      email: client.email,
+      age: client.age,
+      homePhone: client.homePhone,
+      cellPhone: client.cellPhone,
+      notes: client.notes,
+      image: client.image,
     },
   });
 
@@ -97,12 +76,12 @@ export default function CreateClientModal(props: ModalProps) {
       <div className="w-full rounded-lg bg-white shadow dark:border dark:border-gray-700 dark:bg-gray-800  ">
         <div className="space-y-4 p-6 sm:p-8 md:space-y-6">
           <h1 className="text-xl font-bold leading-tight tracking-tight text-gray-900 dark:text-white md:text-2xl">
-            Create Client
+            Edit Client
           </h1>
           <form
             className="space-y-4 md:space-y-6"
             onSubmit={methods.handleSubmit((data) =>
-              createClientMutation.mutate(data)
+              updateClientMutation.mutate(data)
             )}
           >
             <div className="grid grid-cols-2 gap-4">
@@ -158,7 +137,7 @@ export default function CreateClientModal(props: ModalProps) {
               )}
             />
 
-            <FormSubmit>Create</FormSubmit>
+            <FormSubmit>Save</FormSubmit>
             {error && <p className="text-red-700">{error}</p>}
           </form>
         </div>

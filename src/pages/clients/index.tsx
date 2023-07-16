@@ -13,20 +13,6 @@ import withAuth from "~/hocs/withAuth";
 import { ssgInit } from "~/server/ssg-init";
 import { api } from "~/utils/api";
 
-// model Client {
-//   id            String         @id @default(cuid())
-//   createdAt     DateTime       @default(now())
-//   firstName     String
-//   lastName      String
-//   email         String?
-//   image         String?
-//   age           Int?
-//   homePhone     String?
-//   cellPhone     String?
-//   notes         String[]
-//   subscriptions Subscription[]
-// }
-
 const columnHelper = createColumnHelper<Client>();
 
 const columns = [

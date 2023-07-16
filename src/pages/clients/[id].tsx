@@ -3,14 +3,10 @@ import withAuth from "~/hocs/withAuth";
 import { api } from "~/utils/api";
 import { useRouter } from "next/router";
 import { ssgInit } from "~/server/ssg-init";
-import { useZodForm } from "~/utils/useZodForm";
-import { z } from "zod";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useIsMutating } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { User } from "@prisma/client";
-import Reply from "~/components/messages/reply";
 import EditClientModal from "~/components/clients/editClientModal";
 
 const Client = () => {
@@ -31,48 +27,6 @@ const Client = () => {
   const utils = api.useContext();
 
   const { data: session } = useSession();
-
-  //   const createReplyMutation = api.reply.create.useMutation({
-  //     async onMutate(reply) {
-  //       /**
-  //        * Optimistically update the data
-  //        * with the newly added task
-  //        */
-  //       await utils.message.id.cancel();
-
-  //       const message = utils.message.id.getData({
-  //         id: router.query.id as string,
-  //       });
-
-  //       if (!message) {
-  //         return;
-  //       }
-
-  //       /**
-  //        * Optimistically update the data
-  //        * with the newly added reply
-  //        */
-  //       const updatedReplies = [
-  //         ...message.replies,
-  //         {
-  //           ...reply,
-  //           createdAt: new Date(),
-  //           id: `${Math.random()}`,
-  //           author: session?.user as User,
-  //         },
-  //       ];
-
-  //       utils.message.id.setData(
-  //         { id: router.query.id as string },
-  //         {
-  //           ...message,
-  //           replies: updatedReplies,
-  //         }
-  //       );
-  //       // reset form inputs
-  //       methods.reset();
-  //     },
-  //   });
 
   const deleteClientMutation = api.clients.delete.useMutation({
     async onMutate() {

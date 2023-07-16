@@ -3,7 +3,6 @@ export const FormInput = ({
   attribute,
   placeholder,
   type,
-  value,
 }: {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   methods: any;
@@ -29,7 +28,6 @@ export const FormInput = ({
         placeholder={placeholder}
         required
         type={type}
-        value={value}
       />
       {methods.formState.errors[attribute]?.message && (
         <p className="text-red-700">

@@ -1,4 +1,4 @@
-import { useState, Fragment } from "react";
+import { useState } from "react";
 import { api } from "~/utils/api";
 import { z } from "zod";
 import FormModal from "../modal/formModal";
@@ -8,7 +8,6 @@ import { useZodForm } from "~/utils/useZodForm";
 import Autocomplete from "@mui/material/Autocomplete";
 import TextField from "@mui/material/TextField";
 import { Client } from "@prisma/client";
-import { useRouter } from "next/router";
 
 type ModalProps = {
   open: boolean;

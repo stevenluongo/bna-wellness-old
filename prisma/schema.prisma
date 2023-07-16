@@ -29,18 +29,18 @@ model User {
 }
 
 model Client {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-  firstName String
-  lastName  String
-  email     String?
-  image     String?
-  age       Int?
-  homePhone String?
-  cellPhone String?
-  notes     String[]
+  id            String         @id @default(cuid())
+  createdAt     DateTime       @default(now())
+  firstName     String
+  lastName      String
+  email         String?
+  image         String?
+  age           Int?
+  homePhone     String?
+  cellPhone     String?
+  notes         String[]
+  subscriptions Subscription[]
 }
-
 
 enum UserRole {
   ADMIN
@@ -70,4 +70,91 @@ model Reply {
   authorId  String
   message   Message  @relation(fields: [messageId], references: [id])
   messageId String
+}
+
+model Membership {
+  id              String                 @id @default(cuid())
+  createdAt       DateTime               @default(now())
+  name            String
+  description     String
+  isActive        Boolean                @default(true)
+  stripePriceId   String
+  stripeProductId String
+  unitAmount      Int
+  interval        MembershipIntervalType
+  intervalCount   Int
+  subscriptions   Subscription[]
+}
+
+enum MembershipIntervalType {
+  month
+  year
+  week
+  day
+}
+
+model Subscription {
+  id                      String                                   @id @default(cuid())
+  createdAt               DateTime                                 @default(now())
+  isActive                Boolean                                  @default(true)
+  cancelAtPeriodEnd       Boolean
+  currentPeriodEnd        DateTime
+  currentPeriodStart      DateTime
+  defaultPaymentMethod    String
+  membership              Membership                               @relation(fields: [membershipId], references: [id])
+  membershipId            String
+  stripeCustomerId        String
+  stripeSubscriptionId    String
+  stripePriceId           String
+  billingCycleAnchor      DateTime
+  status                  SubscriptionStatusType
+  canceledAt              DateTime?
+  cancellationDetails     SubscriptionCancellation?
+  pauseCollectionBehavior SubscriptionPauseCollectionBehaviorType?
+  latestInvoice           String
+  client                  Client                                   @relation(fields: [clientId], references: [id])
+  clientId                String
+}
+
+enum SubscriptionPauseCollectionBehaviorType {
+  keep_as_draft
+  mark_uncollectible
+  void
+}
+
+enum SubscriptionStatusType {
+  active
+  past_due
+  unpaid
+  canceled
+  incomplete
+  incomplete_expired
+  trialing
+  paused
+}
+
+model SubscriptionCancellation {
+  id             String                               @id @default(cuid())
+  comment        String
+  feedback       SubscriptionCancellationFeedbackType
+  reason         SubscriptionCancellationReasonType
+  subscription   Subscription                         @relation(fields: [subscriptionId], references: [id])
+  subscriptionId String                               @unique
+}
+
+enum SubscriptionCancellationFeedbackType {
+  too_expensive
+  missing_features
+  switched_service
+  unused
+  customer_service
+  too_complex
+  low_quality
+  other
+}
+
+enum SubscriptionCancellationReasonType {
+  cancellation_requested
+  payment_disputed
+  payment_failed
 }

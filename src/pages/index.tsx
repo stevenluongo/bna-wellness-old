@@ -84,6 +84,20 @@ function AuthShowcase() {
       >
         Messages
       </Link>
+      <Link
+        href="/clients"
+        className="rounded-full bg-white/10 px-10 py-3 font-semibold text-white no-underline transition hover:bg-white/20"
+      >
+        Clients
+      </Link>
+      {sessionData?.user.role === "ADMIN" && (
+        <Link
+          href="/admin/memberships"
+          className="rounded-full bg-white/10 px-10 py-3 font-semibold text-white no-underline transition hover:bg-white/20"
+        >
+          Memberships
+        </Link>
+      )}
     </div>
   );
 }

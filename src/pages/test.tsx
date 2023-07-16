@@ -16,8 +16,8 @@ const Register: NextPage = () => {
     <button
       onClick={() =>
         registerMutation.mutate({
-          username: "admin",
-          password: "admin",
+          username: "toor",
+          password: "toor",
           firstName: "admin",
           lastName: "admin",
           role: "ADMIN",

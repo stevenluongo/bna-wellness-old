@@ -1,12 +1,13 @@
 import { type NextPage } from "next";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, type UseFormProps } from "react-hook-form";
 import { z } from "zod";
 import { useState, Fragment } from "react";
 import { api } from "~/utils/api";
 import { Listbox, Transition } from "@headlessui/react";
 import { UserRole } from "@prisma/client";
 import { Controller } from "react-hook-form";
+import { FormInput } from "~/components/modal/formInput";
+import { useZodForm } from "~/utils/useZodForm";
+import { signIn } from "next-auth/react";
 
 const values = Object.keys(UserRole);
 
@@ -19,18 +20,6 @@ export const validationSchema = z.object({
   role: z.enum(["ADMIN", "DEFAULT"]),
 });
 
-function useZodForm<TSchema extends z.ZodType>(
-  props: Omit<UseFormProps<TSchema["_input"]>, "resolver"> & {
-    schema: TSchema;
-  }
-) {
-  const form = useForm<TSchema["_input"]>({
-    ...props,
-    resolver: zodResolver(props.schema, undefined),
-  });
-
-  return form;
-}
 const Register: NextPage = () => {
   const [error, setError] = useState<string>("");
   const [selected, setSelected] = useState(values[0]);
@@ -38,6 +27,7 @@ const Register: NextPage = () => {
   const registerMutation = api.auth.register.useMutation({
     onSuccess(payload) {
       console.log(payload);
+      signIn();
       methods.reset();
     },
     onError(error) {
@@ -69,63 +59,28 @@ const Register: NextPage = () => {
                 registerMutation.mutate(data)
               )}
             >
-              <div>
-                <label
-                  htmlFor="username"
-                  className="mb-2 block text-sm font-medium text-gray-900 dark:text-white"
-                >
-                  Username
-                </label>
-                <input
-                  {...methods.register("username")}
-                  className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-gray-900 focus:border-blue-600 focus:ring-blue-600 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500 sm:text-sm"
-                  placeholder="name@company.com"
-                  required
-                />
-                {methods.formState.errors.username?.message && (
-                  <p className="text-red-700">
-                    {methods.formState.errors.username?.message}
-                  </p>
-                )}
-              </div>
-              <div>
-                <label
-                  htmlFor="firstName"
-                  className="mb-2 block text-sm font-medium text-gray-900 dark:text-white"
-                >
-                  First Name
-                </label>
-                <input
-                  {...methods.register("firstName")}
-                  className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-gray-900 focus:border-blue-600 focus:ring-blue-600 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500 sm:text-sm"
-                  placeholder="First Name"
-                  required
-                />
-                {methods.formState.errors.firstName?.message && (
-                  <p className="text-red-700">
-                    {methods.formState.errors.firstName?.message}
-                  </p>
-                )}
-              </div>
-              <div>
-                <label
-                  htmlFor="lastName"
-                  className="mb-2 block text-sm font-medium text-gray-900 dark:text-white"
-                >
-                  Last Name
-                </label>
-                <input
-                  {...methods.register("lastName")}
-                  className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-gray-900 focus:border-blue-600 focus:ring-blue-600 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500 sm:text-sm"
-                  placeholder="Last Name"
-                  required
-                />
-                {methods.formState.errors.lastName?.message && (
-                  <p className="text-red-700">
-                    {methods.formState.errors.lastName?.message}
-                  </p>
-                )}
-              </div>
+              <FormInput
+                attribute="firstName"
+                placeholder="First Name"
+                methods={methods}
+              />
+              <FormInput
+                attribute="lastName"
+                placeholder="Last Name"
+                methods={methods}
+              />
+              <FormInput
+                attribute="username"
+                placeholder="Username"
+                methods={methods}
+              />
+              <FormInput
+                attribute="password"
+                placeholder="Password"
+                methods={methods}
+                type="password"
+              />
+
               <Controller
                 name="role"
                 control={methods.control}
@@ -184,27 +139,6 @@ const Register: NextPage = () => {
                   </Listbox>
                 )}
               />
-
-              <div>
-                <label
-                  htmlFor="password"
-                  className="mb-2 block text-sm font-medium text-gray-900 dark:text-white"
-                >
-                  Password
-                </label>
-                <input
-                  {...methods.register("password")}
-                  placeholder="••••••••"
-                  className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-gray-900 focus:border-blue-600 focus:ring-blue-600 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500 sm:text-sm"
-                  required
-                  type="password"
-                />
-                {methods.formState.errors.password?.message && (
-                  <p className="text-red-700">
-                    {methods.formState.errors.password?.message}
-                  </p>
-                )}
-              </div>
 
               <button
                 type="submit"

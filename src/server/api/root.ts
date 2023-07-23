@@ -8,6 +8,8 @@ import { membershipRouter } from "./routers/membership";
 import { productRouter } from "./routers/stripe/product";
 import { priceRouter } from "./routers/stripe/price";
 import { terminalRouter } from "./routers/terminal";
+import { roomRouter } from "./routers/room";
+import { userRouter } from "./routers/user";
 
 /**
  * This is the primary router for your server.
@@ -24,6 +26,8 @@ export const appRouter = createTRPCRouter({
   products: productRouter,
   prices: priceRouter,
   terminal: terminalRouter,
+  rooms: roomRouter,
+  users: userRouter,
 });
 
 // export type definition of API

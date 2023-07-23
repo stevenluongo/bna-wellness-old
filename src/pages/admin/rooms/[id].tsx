@@ -11,7 +11,7 @@ import EditClientModal from "~/components/clients/editClientModal";
 import EditMembershipModal from "~/components/memberships/editMembershipModal";
 import withAdminAuth from "~/hocs/withAdminAuth";
 
-const Membership = () => {
+const Room = () => {
   const router = useRouter();
   const [open, setOpen] = useState<boolean>(false);
 
@@ -19,7 +19,7 @@ const Membership = () => {
     setOpen(v);
   };
 
-  const { data } = api.memberships.id.useQuery(
+  const { data } = api.rooms.id.useQuery(
     { id: router.query.id as string },
     {
       staleTime: 3000,
@@ -30,21 +30,19 @@ const Membership = () => {
 
   const { data: session } = useSession();
 
-  const deactivateProductMutation = api.products.deactivate.useMutation();
-
-  const deleteMembershipMutation = api.memberships.delete.useMutation({
+  const deleteRoomMutation = api.rooms.delete.useMutation({
     async onMutate() {
-      await utils.memberships.all.cancel();
-      const allMemberships = utils.memberships.all.getData();
-      if (!allMemberships) {
+      await utils.rooms.all.cancel();
+      const allRooms = utils.rooms.all.getData();
+      if (!allRooms) {
         return;
       }
-      utils.memberships.all.setData(
+      utils.rooms.all.setData(
         undefined,
-        allMemberships.filter((m) => m.id != membership?.id)
+        allRooms.filter((m) => m.id != room?.id)
       );
-      utils.memberships.id.setData({ id: membership.id }, null);
-      router.push("/admin/memberships");
+      utils.rooms.id.setData({ id: room.id }, null);
+      router.push("/admin/rooms");
     },
   });
 
@@ -55,35 +53,32 @@ const Membership = () => {
     // doing this here rather than in `onSettled()`
     // to avoid race conditions if you're clicking fast
     if (number === 0) {
-      void utils.memberships.id.invalidate({ id: router.query.id as string });
+      void utils.rooms.id.invalidate({ id: router.query.id as string });
     }
   }, [number, utils, router.query.id]);
 
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  const membership = data!;
+  const room = data!;
 
-  if (!membership) {
+  if (!room) {
     return null;
   }
 
   return (
     <div className="grid place-items-center pt-8">
       <div className="w-[500px]">
-        <Link href="/admin/memberships">Back</Link>
+        <a onClick={() => router.back()} className="cursor-pointer">
+          Back
+        </a>
         <div>
           <span className="flex items-center gap-4">
-            <h1 className="text-2xl font-bold">{membership.name}</h1>
+            <h1 className="text-2xl font-bold">{room.location}</h1>
             {session?.user.id && (
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
                 className="h-5 w-5 cursor-pointer fill-red-500"
-                onClick={async () => {
-                  deactivateProductMutation.mutateAsync({
-                    id: membership.stripeProductId,
-                  });
-                  deleteMembershipMutation.mutate({ id: membership.id });
-                }}
+                onClick={() => deleteRoomMutation.mutate({ id: room.id })}
               >
                 <path
                   fillRule="evenodd"
@@ -93,55 +88,42 @@ const Membership = () => {
               </svg>
             )}
           </span>
-          <p className="text-gray-500">Description: {membership.description}</p>
           <p className="text-gray-500">
-            Unit Amount: {membership.unitAmount} or $
-            {membership.unitAmount / 100}
-          </p>
-          <p className="text-gray-500">Interval: {membership.interval}</p>
-          <p className="text-gray-500">
-            Interval Count: {membership.intervalCount}
-          </p>
-          <p className="text-gray-500">
-            Product Id: {membership.stripeProductId}
-          </p>
-          <p className="text-gray-500">Price Id: {membership.stripePriceId}</p>
-          <p className="text-gray-500">
-            Is Active: {JSON.stringify(membership.isActive)}
+            Created At: {room.createdAt.toISOString()}
           </p>
         </div>
         <button onClick={() => setOpen(true)}>Edit</button>
-        <EditMembershipModal
+        {/* <EditMembershipModal
           open={open}
           handleChange={handleChange}
           membership={membership}
-        />
+        /> */}
       </div>
     </div>
   );
 };
 
-export default withAdminAuth(Membership);
+export default withAdminAuth(Room);
 
 export const getStaticPaths = async () => {
   const ssg = ssgInit();
-  const memberships = await ssg.memberships.ids.fetch();
+  const rooms = await ssg.rooms.ids.fetch();
   // We'll pre-render only these paths at build time.
   // { fallback: 'blocking' } will server-render pages
   // on-demand if the path doesn't exist.
   return {
-    paths: memberships.map((m) => ({ params: { id: m.id } })),
+    paths: rooms.map((m) => ({ params: { id: m.id } })),
     fallback: "blocking",
   };
 };
 
 export const getStaticProps = async ({ params }: GetStaticPropsContext) => {
   const ssg = ssgInit();
-  const membership = await ssg.memberships.id.fetch({
+  const room = await ssg.rooms.id.fetch({
     id: params?.id as string,
   });
 
-  if (!membership) {
+  if (!room) {
     return {
       notFound: true,
     };

@@ -15,17 +15,38 @@ datasource db {
 }
 
 model User {
-  id        String    @id @default(cuid())
-  createdAt DateTime  @default(now())
-  username  String    @unique
+  id        String     @id @default(cuid())
+  createdAt DateTime   @default(now())
+  username  String     @unique
   firstName String
   lastName  String
   hash      String
   salt      String
-  role      UserRole  @default(DEFAULT)
-  title     UserTitle @default(TRAINER)
+  role      UserRole   @default(DEFAULT)
+  title     UserTitle  @default(TRAINER)
   messages  Message[]
   replies   Reply[]
+  terminals Terminal[]
+}
+
+model Terminal {
+  id         String        @id @default(cuid())
+  openedAt   DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+  closedAt   DateTime?
+  logs       TerminalLog[]
+  isActive   Boolean       @default(true)
+  openedBy   User          @relation(fields: [openedById], references: [id])
+  openedById String
+}
+
+model TerminalLog {
+  id         Int      @id @default(autoincrement())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  terminal   Terminal @relation(fields: [terminalId], references: [id])
+  terminalId String
+  message    String
 }
 
 model Client {

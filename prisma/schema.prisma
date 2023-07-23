@@ -41,9 +41,8 @@ model Terminal {
 }
 
 model TerminalLog {
-  id         Int      @id @default(autoincrement())
+  id         String   @id @default(cuid())
   createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
   terminal   Terminal @relation(fields: [terminalId], references: [id])
   terminalId String
   message    String

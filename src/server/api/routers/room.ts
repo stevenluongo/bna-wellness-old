@@ -8,6 +8,7 @@ import { PrismaClient } from "@prisma/client";
 import { createMembershipValidationSchema } from "~/components/memberships/createMembershipModal";
 import { editMembershipValidationSchema } from "~/components/memberships/editMembershipModal";
 import { createRoomValidationSchema } from "~/components/rooms/createRoomModal";
+import { editRoomValidationSchema } from "~/components/rooms/editRoomModal";
 
 const prisma = new PrismaClient();
 
@@ -44,6 +45,19 @@ export const roomRouter = createTRPCRouter({
           where: {
             id: input.id,
           },
+          include: {
+            users: {
+              select: {
+                id: true,
+                username: true,
+                firstName: true,
+                lastName: true,
+                role: true,
+                createdAt: true,
+                title: true,
+              },
+            },
+          },
         });
       } catch (error) {
         throw error;
@@ -54,12 +68,11 @@ export const roomRouter = createTRPCRouter({
     .input(createRoomValidationSchema)
     .mutation(async ({ input }) => {
       const { userIds, ...rest } = input;
-      console.log(userIds, rest);
       return await prisma.room.create({
         data: {
           ...rest,
           users: {
-            connect: userIds.map((id) => ({ id })),
+            connect: userIds.map((u) => ({ id: JSON.parse(u).id })),
           },
         },
       });
@@ -77,13 +90,19 @@ export const roomRouter = createTRPCRouter({
     }),
 
   update: protectedProcedure
-    .input(editMembershipValidationSchema)
+    .input(editRoomValidationSchema)
     .mutation(async ({ input }) => {
-      const { id, ...rest } = input;
+      const { id, userIds, ...rest } = input;
 
-      return await prisma.membership.update({
+      return await prisma.room.update({
         where: { id },
-        data: { ...rest },
+        data: {
+          ...rest,
+          users: {
+            set: [],
+            connect: userIds?.map((u) => ({ id: JSON.parse(u).id })),
+          },
+        },
       });
     }),
 });

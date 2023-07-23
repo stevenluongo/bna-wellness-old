@@ -36,6 +36,8 @@ export const authRouter = createTRPCRouter({
         firstName: true,
         lastName: true,
         role: true,
+        createdAt: true,
+        title: true,
       },
     });
 

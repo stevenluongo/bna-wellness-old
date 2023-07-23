@@ -18,6 +18,7 @@ import FormControl from "@mui/material/FormControl";
 import ListItemText from "@mui/material/ListItemText";
 import Select, { SelectChangeEvent } from "@mui/material/Select";
 import Checkbox from "@mui/material/Checkbox";
+import { Room, User } from "@prisma/client";
 
 const ITEM_HEIGHT = 48;
 const ITEM_PADDING_TOP = 8;
@@ -30,53 +31,87 @@ const MenuProps = {
   },
 };
 
+interface RoomWithUsers extends Room {
+  users: Omit<User, "hash" | "salt">[];
+}
+
 type ModalProps = {
   open: boolean;
   handleChange: (v: boolean) => void;
+  room: RoomWithUsers;
 };
 
 // validation schema is used by server
-export const createRoomValidationSchema = z.object({
-  startTime: z.date(),
-  endTime: z.date(),
-  conflictsAllowed: z.boolean(),
-  location: z.string(),
-  userIds: z.array(z.string()),
+export const editRoomValidationSchema = z.object({
+  id: z.string(),
+  startTime: z.date().optional(),
+  endTime: z.date().optional(),
+  conflictsAllowed: z.boolean().optional(),
+  location: z.string().optional(),
+  userIds: z.array(z.string()).optional(),
 });
 
-export default function CreateRoomModal(props: ModalProps) {
+export default function EditRoomModal(props: ModalProps) {
   const [personName, setPersonName] = useState<string[]>([]);
 
   const { data: users } = api.users.all.useQuery(undefined, {
     staleTime: 10000,
   });
 
-  const { handleChange } = props;
+  const { handleChange, room } = props;
 
   const utils = api.useContext();
 
   const [error, setError] = useState<string>("");
 
-  const createRoomMutation = api.rooms.create.useMutation({
-    async onMutate(room) {
+  const editRoomMutation = api.rooms.update.useMutation({
+    async onMutate(updatedRoom) {
       try {
+        // cancel queries
         await utils.rooms.all.cancel();
-        const allRooms = utils.rooms.all.getData();
-        if (!allRooms) {
-          return;
-        }
-        utils.rooms.all.setData(undefined, [
-          ...allRooms,
-          {
-            createdAt: new Date(),
-            id: `${Math.random()}`,
-            updatedAt: new Date(),
-            ...room,
-          },
-        ]);
 
+        const room = utils.rooms.id.getData({
+          id: updatedRoom.id,
+        });
+
+        if (!room) return;
+
+        // fetch all clients
+        const allRooms = await utils.rooms.all.fetch();
+
+        if (!allRooms) return;
+
+        // update all clients
+        utils.rooms.all.setData(
+          undefined,
+          allRooms.map((m) => {
+            if (m.id === room.id) {
+              return {
+                ...m,
+                ...updatedRoom,
+              };
+            }
+            return m;
+          })
+        );
+
+        // update client
+        utils.rooms.id.setData(
+          { id: room.id },
+          {
+            ...room,
+            ...updatedRoom,
+          }
+        );
+
+        // close modal
         handleChange(false);
-        form.reset();
+
+        // reset form with updated data
+        form.reset({
+          ...room,
+          ...updatedRoom,
+        });
       } catch (error) {
         console.error(error);
       }
@@ -87,28 +122,46 @@ export default function CreateRoomModal(props: ModalProps) {
   });
 
   const form = useZodForm({
-    schema: createRoomValidationSchema,
+    schema: editRoomValidationSchema,
     defaultValues: {
-      startTime: moment().hour(6).minute(30).second(0).millisecond(0).toDate(),
-      endTime: moment().hour(20).minute(0).second(0).millisecond(0).toDate(),
-      conflictsAllowed: false,
-      location: "",
-      userIds: [],
+      ...room,
+      userIds: room.users.map((u) => JSON.stringify(u)),
     },
   });
+
+  // get dirty fields
+  const dirtyFields = form.formState.dirtyFields;
+
+  const handleSubmit = async (
+    data: z.infer<typeof editRoomValidationSchema>
+  ) => {
+    // get updated fields
+    const updatedFields = Object.fromEntries(
+      Object.entries(data).filter(
+        ([key]) =>
+          dirtyFields[key as keyof z.infer<typeof editRoomValidationSchema>]
+      )
+    );
+
+    // if no fields are updated, close modal
+    if (Object.keys(updatedFields).length === 0) return handleChange(false);
+
+    await editRoomMutation.mutateAsync({
+      id: room.id,
+      ...updatedFields,
+    });
+  };
 
   return (
     <FormModal {...props}>
       <div className="w-full rounded-lg bg-white shadow dark:border dark:border-gray-700 dark:bg-gray-800  ">
         <div className="space-y-4 p-6 sm:p-8 md:space-y-6">
           <h1 className="text-xl font-bold leading-tight tracking-tight text-gray-900 dark:text-white md:text-2xl">
-            Create Room
+            Edit Room
           </h1>
           <form
             className="space-y-4 md:space-y-6"
-            onSubmit={form.handleSubmit((data) => {
-              createRoomMutation.mutate(data);
-            })}
+            onSubmit={form.handleSubmit(handleSubmit)}
           >
             <FormInput
               methods={form}
@@ -181,7 +234,8 @@ export default function CreateRoomModal(props: ModalProps) {
                       <MenuItem key={user.id} value={JSON.stringify(user)}>
                         <Checkbox
                           checked={
-                            field.value.indexOf(JSON.stringify(user)) > -1
+                            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                            field.value!.indexOf(JSON.stringify(user)) > -1
                           }
                         />
                         <ListItemText
@@ -194,7 +248,7 @@ export default function CreateRoomModal(props: ModalProps) {
               )}
             />
 
-            <FormSubmit>Create</FormSubmit>
+            <FormSubmit>Save Changes</FormSubmit>
             {error && <p className="text-red-700">{error}</p>}
           </form>
         </div>

@@ -16,6 +16,8 @@ export const userRouter = createTRPCRouter({
           firstName: true,
           lastName: true,
           role: true,
+          createdAt: true,
+          title: true,
         },
       });
     } catch (error) {

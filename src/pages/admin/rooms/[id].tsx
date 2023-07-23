@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 import EditClientModal from "~/components/clients/editClientModal";
 import EditMembershipModal from "~/components/memberships/editMembershipModal";
 import withAdminAuth from "~/hocs/withAdminAuth";
+import EditRoomModal from "~/components/rooms/editRoomModal";
 
 const Room = () => {
   const router = useRouter();
@@ -93,11 +94,7 @@ const Room = () => {
           </p>
         </div>
         <button onClick={() => setOpen(true)}>Edit</button>
-        {/* <EditMembershipModal
-          open={open}
-          handleChange={handleChange}
-          membership={membership}
-        /> */}
+        <EditRoomModal open={open} handleChange={handleChange} room={room} />
       </div>
     </div>
   );

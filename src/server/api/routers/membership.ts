@@ -6,6 +6,7 @@ import {
 } from "~/server/api/trpc";
 import { PrismaClient } from "@prisma/client";
 import { createMembershipValidationSchema } from "~/components/memberships/createMembershipModal";
+import { editMembershipValidationSchema } from "~/components/memberships/editMembershipModal";
 
 const prisma = new PrismaClient();
 
@@ -55,15 +56,7 @@ export const membershipRouter = createTRPCRouter({
     .input(createMembershipValidationSchema)
     .mutation(async ({ input }) => {
       const membership = await prisma.membership.create({
-        data: {
-          name: input.name,
-          description: input.description,
-          unitAmount: input.unitAmount,
-          interval: input.interval,
-          intervalCount: input.intervalCount,
-          stripeProductId: input.stripeProductId,
-          stripePriceId: input.stripePriceId,
-        },
+        data: input,
       });
 
       return membership;
@@ -81,7 +74,7 @@ export const membershipRouter = createTRPCRouter({
     }),
 
   update: protectedProcedure
-    .input(z.object({ id: z.string(), body: z.string() }))
+    .input(editMembershipValidationSchema)
     .mutation(async ({ input }) => {
       const { id, ...rest } = input;
 

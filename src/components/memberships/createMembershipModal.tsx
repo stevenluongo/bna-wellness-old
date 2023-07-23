@@ -37,7 +37,7 @@ export default function CreateMembershipModal(props: ModalProps) {
 
   const createProductMutation = api.products.create.useMutation();
 
-  const createClientMutation = api.memberships.create.useMutation({
+  const createMembershipMutation = api.memberships.create.useMutation({
     async onMutate(membership) {
       try {
         await utils.memberships.all.cancel();
@@ -86,7 +86,7 @@ export default function CreateMembershipModal(props: ModalProps) {
         currency: "usd",
       });
 
-      createClientMutation.mutate({
+      createMembershipMutation.mutate({
         ...data,
         stripeProductId: product.id,
         stripePriceId: product.default_price as string,

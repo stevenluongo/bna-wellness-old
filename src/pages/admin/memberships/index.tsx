@@ -6,6 +6,7 @@ import {
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table";
+import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import CreateMembershipModal from "~/components/memberships/createMembershipModal";
 import withAdminAuth from "~/hocs/withAdminAuth";
@@ -17,10 +18,12 @@ const columnHelper = createColumnHelper<Membership>();
 const Memberships = () => {
   const [open, setOpen] = useState(false);
 
+  const router = useRouter();
+
   const utils = api.useContext();
 
   const { data } = api.memberships.all.useQuery(undefined, {
-    staleTime: 3000,
+    staleTime: 10000,
   });
 
   const table = useReactTable({
@@ -40,7 +43,7 @@ const Memberships = () => {
     // doing this here rather than in `onSettled()`
     // to avoid race conditions if you're clicking fast
     if (number === 0) {
-      void utils.clients.all.invalidate();
+      void utils.memberships.all.invalidate();
     }
   }, [number, utils]);
 
@@ -65,7 +68,13 @@ const Memberships = () => {
         </thead>
         <tbody>
           {table.getRowModel().rows.map((row) => (
-            <tr key={row.id}>
+            <tr
+              key={row.id}
+              className="cursor-pointer"
+              onClick={() =>
+                router.push(`/admin/memberships/${row.original.id}`)
+              }
+            >
               {row.getVisibleCells().map((cell) => (
                 <td key={cell.id}>
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}

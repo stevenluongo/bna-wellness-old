@@ -102,6 +102,12 @@ export default function EditRoomModal(props: ModalProps) {
     onError(error) {
       setError(error.message);
     },
+    async onSuccess() {
+      const res = await fetch(
+        `/api/revalidate?secret=${process.env.NEXT_PUBLIC_MY_SECRET_TOKEN}&path=/admin/rooms/${room.id}`
+      );
+      console.log(res);
+    },
   });
 
   const form = useZodForm({

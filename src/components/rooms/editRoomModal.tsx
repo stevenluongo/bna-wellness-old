@@ -72,11 +72,18 @@ export default function EditRoomModal(props: ModalProps) {
           })
         );
 
+        console.log(updatedRoom.userIds);
+
+        const updatedUsers: User[] = updatedRoom.userIds?.map((id) =>
+          users?.find((u) => u.id === id)
+        ) as User[];
+
         // update client
         utils.rooms.id.setData(
           { id: room.id },
           {
             ...room,
+            users: updatedUsers,
             ...updatedRoom,
           }
         );

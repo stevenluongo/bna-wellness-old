@@ -1,14 +1,10 @@
 import { GetStaticPropsContext } from "next";
-import withAuth from "~/hocs/withAuth";
 import { api } from "~/utils/api";
 import { useRouter } from "next/router";
 import { ssgInit } from "~/server/ssg-init";
 import { useSession } from "next-auth/react";
-import Link from "next/link";
 import { useIsMutating } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import EditClientModal from "~/components/clients/editClientModal";
-import EditMembershipModal from "~/components/memberships/editMembershipModal";
 import withAdminAuth from "~/hocs/withAdminAuth";
 import EditRoomModal from "~/components/rooms/editRoomModal";
 import moment from "moment";

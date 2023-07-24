@@ -11,6 +11,7 @@ import EditClientModal from "~/components/clients/editClientModal";
 import EditMembershipModal from "~/components/memberships/editMembershipModal";
 import withAdminAuth from "~/hocs/withAdminAuth";
 import EditRoomModal from "~/components/rooms/editRoomModal";
+import moment from "moment";
 
 const Room = () => {
   const router = useRouter();
@@ -92,6 +93,19 @@ const Room = () => {
           <p className="text-gray-500">
             Created At: {room.createdAt.toISOString()}
           </p>
+          <p className="text-gray-500">
+            Start Time: {moment(room.startTime).format("h:mm a")}
+          </p>
+          <p className="text-gray-500">
+            End Time: {moment(room.endTime).format("h:mm a")}
+          </p>
+          <p className="text-gray-500">Users:</p>
+          {room.users.map((m) => (
+            <a className="text-gray-500" key={m.id}>
+              {" "}
+              {m.firstName} {m.lastName},
+            </a>
+          ))}
         </div>
         <button onClick={() => setOpen(true)}>Edit</button>
         <EditRoomModal open={open} handleChange={handleChange} room={room} />

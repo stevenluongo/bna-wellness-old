@@ -5,8 +5,6 @@ import {
   protectedProcedure,
 } from "~/server/api/trpc";
 import { PrismaClient } from "@prisma/client";
-import { createMembershipValidationSchema } from "~/components/memberships/createMembershipModal";
-import { editMembershipValidationSchema } from "~/components/memberships/editMembershipModal";
 import { createRoomValidationSchema } from "~/components/rooms/createRoomModal";
 import { editRoomValidationSchema } from "~/components/rooms/editRoomModal";
 
@@ -18,6 +16,19 @@ export const roomRouter = createTRPCRouter({
       return await prisma.room.findMany({
         orderBy: {
           createdAt: "asc",
+        },
+        include: {
+          events: {
+            include: {
+              checks: {
+                include: {
+                  client: true,
+                  terminal: true,
+                  trainer: true,
+                },
+              },
+            },
+          },
         },
       });
     } catch (error) {
@@ -72,7 +83,7 @@ export const roomRouter = createTRPCRouter({
         data: {
           ...rest,
           users: {
-            connect: userIds.map((u) => ({ id: JSON.parse(u).id })),
+            connect: userIds.map((id) => ({ id })),
           },
         },
       });
@@ -100,7 +111,7 @@ export const roomRouter = createTRPCRouter({
           ...rest,
           users: {
             set: [],
-            connect: userIds?.map((u) => ({ id: JSON.parse(u).id })),
+            connect: userIds?.map((id) => ({ id })),
           },
         },
       });

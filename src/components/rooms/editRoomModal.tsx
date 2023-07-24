@@ -5,31 +5,10 @@ import { FormSubmit } from "../modal/formSubmit";
 import { FormInput } from "../modal/formInput";
 import FormModal from "../modal/formModal";
 import { useZodForm } from "~/utils/useZodForm";
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { TimePicker } from "@mui/x-date-pickers/TimePicker";
-import { AdapterMoment } from "@mui/x-date-pickers/AdapterMoment";
-import "moment/locale/de";
-import { Controller } from "react-hook-form";
-import moment from "moment";
-import OutlinedInput from "@mui/material/OutlinedInput";
-import InputLabel from "@mui/material/InputLabel";
-import MenuItem from "@mui/material/MenuItem";
-import FormControl from "@mui/material/FormControl";
-import ListItemText from "@mui/material/ListItemText";
-import Select, { SelectChangeEvent } from "@mui/material/Select";
-import Checkbox from "@mui/material/Checkbox";
 import { Room, User } from "@prisma/client";
-
-const ITEM_HEIGHT = 48;
-const ITEM_PADDING_TOP = 8;
-const MenuProps = {
-  PaperProps: {
-    style: {
-      maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
-      width: 250,
-    },
-  },
-};
+import MomentLocalizationProvider from "../library/MomentLocalizationProvider";
+import ControlledTimePicker from "../library/ControlledTimePicker";
+import ControlledMultiSelect from "../library/ControlledMultiSelect";
 
 interface RoomWithUsers extends Room {
   users: Omit<User, "hash" | "salt">[];
@@ -52,8 +31,6 @@ export const editRoomValidationSchema = z.object({
 });
 
 export default function EditRoomModal(props: ModalProps) {
-  const [personName, setPersonName] = useState<string[]>([]);
-
   const { data: users } = api.users.all.useQuery(undefined, {
     staleTime: 10000,
   });
@@ -107,10 +84,16 @@ export default function EditRoomModal(props: ModalProps) {
         // close modal
         handleChange(false);
 
+        // need to stringify user ids for form
+        const updatedUserIds = updatedRoom.userIds?.map((id) =>
+          JSON.stringify(users?.find((u) => u.id === id))
+        );
+
         // reset form with updated data
         form.reset({
           ...room,
           ...updatedRoom,
+          userIds: updatedUserIds,
         });
       } catch (error) {
         console.error(error);
@@ -135,6 +118,10 @@ export default function EditRoomModal(props: ModalProps) {
   const handleSubmit = async (
     data: z.infer<typeof editRoomValidationSchema>
   ) => {
+    data = {
+      ...data,
+      userIds: data.userIds?.map((u) => JSON.parse(u).id),
+    };
     // get updated fields
     const updatedFields = Object.fromEntries(
       Object.entries(data).filter(
@@ -169,83 +156,28 @@ export default function EditRoomModal(props: ModalProps) {
               placeholder="Location"
             />
 
-            <LocalizationProvider
-              dateAdapter={AdapterMoment}
-              adapterLocale="de"
-            >
+            <MomentLocalizationProvider>
               <div className="flex gap-4">
-                <Controller
-                  control={form.control}
+                <ControlledTimePicker
                   name="startTime"
-                  render={({ field }) => (
-                    <TimePicker
-                      label="Start Time"
-                      ampm
-                      value={moment(field.value)}
-                      onChange={(date) =>
-                        date && field.onChange(date.toDate() as Date)
-                      }
-                    />
-                  )}
-                />
-                <Controller
                   control={form.control}
+                  label="Start Time"
+                />
+                <ControlledTimePicker
                   name="endTime"
-                  render={({ field }) => (
-                    <TimePicker
-                      label="End Time"
-                      ampm
-                      value={moment(field.value)}
-                      onChange={(date) =>
-                        date && field.onChange(date.toDate() as Date)
-                      }
-                    />
-                  )}
+                  control={form.control}
+                  label="End Time"
                 />
               </div>
-            </LocalizationProvider>
+            </MomentLocalizationProvider>
 
-            <Controller
+            <ControlledMultiSelect
               name="userIds"
               control={form.control}
-              render={({ field }) => (
-                <FormControl sx={{ width: "100%" }}>
-                  <InputLabel id="demo-multiple-checkbox-label">
-                    Users
-                  </InputLabel>
-                  <Select
-                    labelId="demo-multiple-checkbox-label"
-                    id="demo-multiple-checkbox"
-                    multiple
-                    value={field.value}
-                    onChange={(e) => {
-                      field.onChange(e.target.value as string[]);
-                    }}
-                    input={<OutlinedInput label="Users" />}
-                    renderValue={(selected) =>
-                      selected
-                        .map((s) => JSON.parse(s))
-                        .map((s) => `${s.firstName} ${s.lastName}`)
-                        .join(", ")
-                    }
-                    MenuProps={MenuProps}
-                  >
-                    {users?.map((user) => (
-                      <MenuItem key={user.id} value={JSON.stringify(user)}>
-                        <Checkbox
-                          checked={
-                            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                            field.value!.indexOf(JSON.stringify(user)) > -1
-                          }
-                        />
-                        <ListItemText
-                          primary={`${user.firstName} ${user.lastName}`}
-                        />
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              )}
+              label="Users"
+              labelId="users-multiple-checkbox-label"
+              selectId="users-multiple-checkbox"
+              values={users}
             />
 
             <FormSubmit>Save Changes</FormSubmit>

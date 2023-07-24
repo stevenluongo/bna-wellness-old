@@ -10,6 +10,7 @@ import { priceRouter } from "./routers/stripe/price";
 import { terminalRouter } from "./routers/terminal";
 import { roomRouter } from "./routers/room";
 import { userRouter } from "./routers/user";
+import { eventsRouter } from "./routers/event";
 
 /**
  * This is the primary router for your server.
@@ -28,6 +29,7 @@ export const appRouter = createTRPCRouter({
   terminal: terminalRouter,
   rooms: roomRouter,
   users: userRouter,
+  events: eventsRouter,
 });
 
 // export type definition of API

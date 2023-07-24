@@ -58,8 +58,8 @@ model Check {
   startTime  DateTime
   endTime    DateTime
   weekStart  DateTime
-  user       User     @relation(fields: [userId], references: [id])
-  userId     String
+  trainer    User     @relation(fields: [trainerId], references: [id])
+  trainerId  String
   terminal   Terminal @relation(fields: [terminalId], references: [id])
   terminalId String
   client     Client   @relation(fields: [clientId], references: [id])

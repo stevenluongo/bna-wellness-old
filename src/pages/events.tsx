@@ -124,7 +124,7 @@ const Events = () => {
 
 export default withAuth(Events);
 
-export const getServerSideProps = async () => {
+export const getStaticProps = async () => {
   const ssg = ssgInit();
   await ssg.rooms.all.prefetch();
   return {

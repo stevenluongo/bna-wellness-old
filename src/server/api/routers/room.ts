@@ -110,7 +110,7 @@ export const roomRouter = createTRPCRouter({
         data: {
           ...rest,
           users: {
-            set: [],
+            set: userIds && [],
             connect: userIds?.map((id) => ({ id })),
           },
         },

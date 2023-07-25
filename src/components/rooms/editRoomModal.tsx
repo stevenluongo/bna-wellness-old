@@ -72,9 +72,7 @@ export default function EditRoomModal(props: ModalProps) {
           })
         );
 
-        console.log(updatedRoom.userIds);
-
-        const updatedUsers: User[] = updatedRoom.userIds?.map((id) =>
+        const updatedUsers = updatedRoom.userIds?.map((id) =>
           users?.find((u) => u.id === id)
         ) as User[];
 
@@ -91,10 +89,8 @@ export default function EditRoomModal(props: ModalProps) {
         // close modal
         handleChange(false);
 
-        // need to stringify user ids for form
-        const updatedUserIds = updatedRoom.userIds?.map((id) =>
-          JSON.stringify(users?.find((u) => u.id === id))
-        );
+        // need to stringify users for the form
+        const updatedUserIds = updatedUsers.map((u) => JSON.stringify(u));
 
         // reset form with updated data
         form.reset({

@@ -104,17 +104,24 @@ export default function CreateMembershipModal(props: ModalProps) {
             Create Membership
           </h1>
           <form className="space-y-4 md:space-y-6" onSubmit={handleSubmit}>
-            <FormInput methods={form} attribute="name" placeholder="Name" />
             <FormInput
-              methods={form}
-              attribute="description"
-              placeholder="Description"
+              attribute="name"
+              placeholder="Name"
+              register={form.register}
+              errors={form.formState.errors}
             />
             <FormInput
-              methods={form}
+              attribute="description"
+              placeholder="Description"
+              register={form.register}
+              errors={form.formState.errors}
+            />
+            <FormInput
               attribute="unitAmount"
               placeholder="Unit Amount"
               type="number"
+              register={form.register}
+              errors={form.formState.errors}
             />
 
             <Controller
@@ -179,10 +186,11 @@ export default function CreateMembershipModal(props: ModalProps) {
             />
 
             <FormInput
-              methods={form}
               attribute="intervalCount"
               placeholder="Interval Count"
               type="number"
+              register={form.register}
+              errors={form.formState.errors}
             />
 
             <FormSubmit>Create</FormSubmit>

@@ -62,22 +62,26 @@ const Register: NextPage = () => {
               <FormInput
                 attribute="firstName"
                 placeholder="First Name"
-                methods={methods}
+                register={methods.register}
+                errors={methods.formState.errors}
               />
               <FormInput
                 attribute="lastName"
                 placeholder="Last Name"
-                methods={methods}
+                register={methods.register}
+                errors={methods.formState.errors}
               />
               <FormInput
                 attribute="username"
                 placeholder="Username"
-                methods={methods}
+                register={methods.register}
+                errors={methods.formState.errors}
               />
               <FormInput
                 attribute="password"
                 placeholder="Password"
-                methods={methods}
+                register={methods.register}
+                errors={methods.formState.errors}
                 type="password"
               />
 

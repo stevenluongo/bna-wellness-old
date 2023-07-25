@@ -31,75 +31,70 @@ export const editRoomValidationSchema = z.object({
 });
 
 export default function EditRoomModal(props: ModalProps) {
+  const { handleChange } = props;
+  const utils = api.useContext();
+  const [error, setError] = useState<string>("");
   const { data: users } = api.users.all.useQuery(undefined, {
     staleTime: 10000,
   });
 
-  const { handleChange, room } = props;
+  const {
+    reset,
+    formState: { dirtyFields, errors },
+    handleSubmit,
+    control,
+    register,
+  } = useZodForm({
+    schema: editRoomValidationSchema,
+    defaultValues: useMemo(() => {
+      return {
+        ...props.room,
+        userIds: props.room.users?.map((u) => JSON.stringify(u)),
+      };
+    }, [props.room]),
+  });
 
-  const utils = api.useContext();
-
-  const [error, setError] = useState<string>("");
+  // reset form when room changes
+  useEffect(() => {
+    reset({
+      ...props.room,
+      userIds: props.room.users?.map((u) => JSON.stringify(u)),
+    });
+  }, [props.room, reset]);
 
   const editRoomMutation = api.rooms.update.useMutation({
     async onMutate(updatedRoom) {
       try {
         // cancel queries
-        await utils.rooms.all.cancel();
+        await utils.rooms.id.cancel();
 
+        // fetch fresh data
         const room = utils.rooms.id.getData({
           id: updatedRoom.id,
         });
 
+        // if no data, return
         if (!room) return;
 
-        // fetch all clients
-        const allRooms = await utils.rooms.all.fetch();
-
-        if (!allRooms) return;
-
-        // update all clients
-        utils.rooms.all.setData(
-          undefined,
-          allRooms?.map((m) => {
-            if (m.id === room.id) {
-              return {
-                ...m,
-                ...updatedRoom,
-              };
-            }
-            return m;
-          })
-        );
-
+        // update the room with the updated users
         const updatedUsers = updatedRoom.userIds?.map((id) =>
           users?.find((u) => u.id === id)
         ) as User[];
 
-        // update client
+        // update the room with the updated data
         utils.rooms.id.setData(
           { id: room.id },
           {
             ...room,
-            users: updatedUsers,
             ...updatedRoom,
+            users: updatedUsers,
           }
         );
 
         // close modal
         handleChange(false);
-
-        // need to stringify users for the form
-        const updatedUserIds = updatedUsers?.map((u) => JSON.stringify(u));
-
-        // reset form with updated data
-        form.reset({
-          ...room,
-          ...updatedRoom,
-          userIds: updatedUserIds,
-        });
       } catch (error) {
-        console.error(error);
+        if (error instanceof Error) setError(error.message as string);
       }
     },
     onError(error) {
@@ -107,32 +102,7 @@ export default function EditRoomModal(props: ModalProps) {
     },
   });
 
-  const form = useZodForm({
-    schema: editRoomValidationSchema,
-    defaultValues: useMemo(() => {
-      return {
-        ...room,
-        userIds: room.users?.map((u) => JSON.stringify(u)),
-      };
-    }, [room]),
-  });
-
-  const reset = form.reset;
-
-  useEffect(() => {
-    console.log(room);
-    reset({
-      ...room,
-      userIds: room.users?.map((u) => JSON.stringify(u)),
-    });
-  }, [room, reset]);
-
-  // get dirty fields
-  const dirtyFields = form.formState.dirtyFields;
-
-  const handleSubmit = async (
-    data: z.infer<typeof editRoomValidationSchema>
-  ) => {
+  const onSubmit = (data: z.infer<typeof editRoomValidationSchema>) => {
     data = {
       ...data,
       userIds: data.userIds?.map((u) => JSON.parse(u).id),
@@ -148,8 +118,8 @@ export default function EditRoomModal(props: ModalProps) {
     // if no fields are updated, close modal
     if (Object.keys(updatedFields).length === 0) return handleChange(false);
 
-    await editRoomMutation.mutateAsync({
-      id: room.id,
+    editRoomMutation.mutate({
+      id: props.room.id,
       ...updatedFields,
     });
   };
@@ -163,10 +133,11 @@ export default function EditRoomModal(props: ModalProps) {
           </h1>
           <form
             className="space-y-4 md:space-y-6"
-            onSubmit={form.handleSubmit(handleSubmit)}
+            onSubmit={handleSubmit(onSubmit)}
           >
             <FormInput
-              methods={form}
+              errors={errors}
+              register={register}
               attribute="location"
               placeholder="Location"
             />
@@ -175,12 +146,12 @@ export default function EditRoomModal(props: ModalProps) {
               <div className="flex gap-4">
                 <ControlledTimePicker
                   name="startTime"
-                  control={form.control}
+                  control={control}
                   label="Start Time"
                 />
                 <ControlledTimePicker
                   name="endTime"
-                  control={form.control}
+                  control={control}
                   label="End Time"
                 />
               </div>
@@ -188,7 +159,7 @@ export default function EditRoomModal(props: ModalProps) {
 
             <ControlledMultiSelect
               name="userIds"
-              control={form.control}
+              control={control}
               label="Users"
               labelId="users-multiple-checkbox-label"
               selectId="users-multiple-checkbox"

@@ -109,25 +109,29 @@ export default function CreateClientModal(props: ModalProps) {
               <FormInput
                 attribute="firstName"
                 placeholder="First Name"
-                methods={methods}
+                register={methods.register}
+                errors={methods.formState.errors}
               />
               <FormInput
                 attribute="lastName"
                 placeholder="Last Name"
-                methods={methods}
+                register={methods.register}
+                errors={methods.formState.errors}
               />
             </div>
             <div className="grid grid-cols-[9fr_3fr] gap-4">
               <FormInput
                 attribute="email"
                 placeholder="Email Address"
-                methods={methods}
+                register={methods.register}
+                errors={methods.formState.errors}
               />
 
               <FormInput
                 attribute="age"
                 placeholder="Age"
-                methods={methods}
+                register={methods.register}
+                errors={methods.formState.errors}
                 type="number"
               />
             </div>
@@ -135,13 +139,15 @@ export default function CreateClientModal(props: ModalProps) {
               <FormInput
                 attribute="homePhone"
                 placeholder="Home Number"
-                methods={methods}
+                register={methods.register}
+                errors={methods.formState.errors}
               />
 
               <FormInput
                 attribute="cellPhone"
                 placeholder="Cell Number"
-                methods={methods}
+                register={methods.register}
+                errors={methods.formState.errors}
               />
             </div>
 

@@ -163,11 +163,17 @@ export default function EditMembershipModal(props: ModalProps) {
             className="space-y-4 md:space-y-6"
             onSubmit={methods.handleSubmit(handleSubmit)}
           >
-            <FormInput attribute="name" placeholder="Name" methods={methods} />
+            <FormInput
+              attribute="name"
+              placeholder="Name"
+              register={methods.register}
+              errors={methods.formState.errors}
+            />
             <FormInput
               attribute="description"
               placeholder="Description"
-              methods={methods}
+              register={methods.register}
+              errors={methods.formState.errors}
             />
             <FormSubmit>Save</FormSubmit>
             {error && <p className="text-red-700">{error}</p>}

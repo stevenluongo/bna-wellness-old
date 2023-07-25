@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { api } from "~/utils/api";
 import { z } from "zod";
 import { FormSubmit } from "../modal/formSubmit";
@@ -22,41 +22,34 @@ export const editUserValidationSchema = z.object({
 
 export default function EditUserModal(props: ModalProps) {
   const { handleChange, user } = props;
-
   const utils = api.useContext();
-
   const [error, setError] = useState<string>("");
+
+  const {
+    reset,
+    formState: { errors, dirtyFields },
+    handleSubmit,
+    register,
+  } = useZodForm({
+    schema: editUserValidationSchema,
+    defaultValues: useMemo(() => {
+      return user;
+    }, [user]),
+  });
+
+  // reset form when user changes
+  useEffect(() => {
+    reset(user);
+  }, [user, reset]);
 
   const editUserMutation = api.users.update.useMutation({
     async onMutate(updatedUser) {
       try {
-        // cancel queries
-        await utils.users.all.cancel();
-
-        const user = utils.users.id.getData({
+        await utils.users.id.cancel();
+        const user = await utils.users.id.getData({
           id: updatedUser.id,
         });
-
         if (!user) return;
-
-        // fetch all clients
-        const allUsers = await utils.users.all.fetch();
-
-        if (!allUsers) return;
-
-        // update all clients
-        utils.users.all.setData(
-          undefined,
-          allUsers.map((m) => {
-            if (m.id === user.id) {
-              return {
-                ...m,
-                ...updatedUser,
-              };
-            }
-            return m;
-          })
-        );
 
         // update client
         utils.users.id.setData(
@@ -69,12 +62,6 @@ export default function EditUserModal(props: ModalProps) {
 
         // close modal
         handleChange(false);
-
-        // reset form with updated data
-        form.reset({
-          ...user,
-          ...updatedUser,
-        });
       } catch (error) {
         console.error(error);
       }
@@ -84,19 +71,7 @@ export default function EditUserModal(props: ModalProps) {
     },
   });
 
-  const form = useZodForm({
-    schema: editUserValidationSchema,
-    defaultValues: {
-      ...user,
-    },
-  });
-
-  // get dirty fields
-  const dirtyFields = form.formState.dirtyFields;
-
-  const handleSubmit = async (
-    data: z.infer<typeof editUserValidationSchema>
-  ) => {
+  const onSubmit = async (data: z.infer<typeof editUserValidationSchema>) => {
     // get updated fields
     const updatedFields = Object.fromEntries(
       Object.entries(data).filter(
@@ -108,7 +83,7 @@ export default function EditUserModal(props: ModalProps) {
     // if no fields are updated, close modal
     if (Object.keys(updatedFields).length === 0) return handleChange(false);
 
-    await editUserMutation.mutateAsync({
+    editUserMutation.mutate({
       id: user.id,
       ...updatedFields,
     });
@@ -123,15 +98,17 @@ export default function EditUserModal(props: ModalProps) {
           </h1>
           <form
             className="space-y-4 md:space-y-6"
-            onSubmit={form.handleSubmit(handleSubmit)}
+            onSubmit={handleSubmit(onSubmit)}
           >
             <FormInput
-              methods={form}
+              errors={errors}
+              register={register}
               attribute="firstName"
               placeholder="First Name"
             />
             <FormInput
-              methods={form}
+              errors={errors}
+              register={register}
               attribute="lastName"
               placeholder="Last Name"
             />

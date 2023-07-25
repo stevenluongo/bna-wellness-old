@@ -25,15 +25,29 @@ export const createRoomValidationSchema = z.object({
 });
 
 export default function CreateRoomModal(props: ModalProps) {
+  const { handleChange } = props;
   const { data: users } = api.users.all.useQuery(undefined, {
     staleTime: 10000,
   });
-
-  const { handleChange } = props;
-
   const utils = api.useContext();
-
   const [error, setError] = useState<string>("");
+
+  const {
+    reset,
+    register,
+    handleSubmit,
+    formState: { errors },
+    control,
+  } = useZodForm({
+    schema: createRoomValidationSchema,
+    defaultValues: {
+      startTime: moment().hour(6).minute(30).second(0).millisecond(0).toDate(),
+      endTime: moment().hour(20).minute(0).second(0).millisecond(0).toDate(),
+      conflictsAllowed: false,
+      location: "",
+      userIds: [],
+    },
+  });
 
   const createRoomMutation = api.rooms.create.useMutation({
     async onMutate(room) {
@@ -53,26 +67,14 @@ export default function CreateRoomModal(props: ModalProps) {
             ...room,
           },
         ]);
-
+        reset();
         handleChange(false);
-        form.reset();
       } catch (error) {
         console.error(error);
       }
     },
     onError(error) {
       setError(error.message);
-    },
-  });
-
-  const form = useZodForm({
-    schema: createRoomValidationSchema,
-    defaultValues: {
-      startTime: moment().hour(6).minute(30).second(0).millisecond(0).toDate(),
-      endTime: moment().hour(20).minute(0).second(0).millisecond(0).toDate(),
-      conflictsAllowed: false,
-      location: "",
-      userIds: [],
     },
   });
 
@@ -85,7 +87,7 @@ export default function CreateRoomModal(props: ModalProps) {
           </h1>
           <form
             className="space-y-4 md:space-y-6"
-            onSubmit={form.handleSubmit((data) => {
+            onSubmit={handleSubmit((data) => {
               data = {
                 ...data,
                 userIds: data.userIds.map((u) => JSON.parse(u).id),
@@ -94,7 +96,8 @@ export default function CreateRoomModal(props: ModalProps) {
             })}
           >
             <FormInput
-              methods={form}
+              register={register}
+              errors={errors}
               attribute="location"
               placeholder="Location"
             />
@@ -103,12 +106,12 @@ export default function CreateRoomModal(props: ModalProps) {
               <div className="flex gap-4">
                 <ControlledTimePicker
                   name="startTime"
-                  control={form.control}
+                  control={control}
                   label="Start Time"
                 />
                 <ControlledTimePicker
                   name="endTime"
-                  control={form.control}
+                  control={control}
                   label="End Time"
                 />
               </div>
@@ -116,7 +119,7 @@ export default function CreateRoomModal(props: ModalProps) {
 
             <ControlledMultiSelect
               name="userIds"
-              control={form.control}
+              control={control}
               label="Users"
               labelId="users-multiple-checkbox-label"
               selectId="users-multiple-checkbox"

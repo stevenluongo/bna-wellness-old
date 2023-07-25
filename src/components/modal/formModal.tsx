@@ -1,4 +1,4 @@
-import { Fragment, ReactNode, useRef } from "react";
+import { Fragment, ReactNode } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 
 export default function FormModal({
@@ -10,14 +10,11 @@ export default function FormModal({
   handleChange: (v: boolean) => void;
   children: ReactNode;
 }) {
-  const cancelButtonRef = useRef(null);
-
   return (
     <Transition.Root show={open} as={Fragment}>
       <Dialog
         as="div"
         className="relative z-10"
-        initialFocus={cancelButtonRef}
         onClose={() => handleChange(false)}
       >
         <Transition.Child

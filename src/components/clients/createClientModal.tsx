@@ -5,17 +5,7 @@ import FormModal from "../modal/formModal";
 import { FormInput } from "../modal/formInput";
 import { FormSubmit } from "../modal/formSubmit";
 import { useZodForm } from "~/utils/useZodForm";
-import Autocomplete from "@mui/material/Autocomplete";
-import TextField from "@mui/material/TextField";
-
-const people = [
-  { id: 1, name: "Wade Cooper" },
-  { id: 2, name: "Arlene Mccoy" },
-  { id: 3, name: "Devon Webb" },
-  { id: 4, name: "Tom Cook" },
-  { id: 5, name: "Tanya Fox" },
-  { id: 6, name: "Hellen Schmidt" },
-];
+import ControlledAutocomplete from "../library/ControlledAutocomplete";
 
 type ModalProps = {
   open: boolean;
@@ -35,24 +25,23 @@ export const createClientValidationSchema = z.object({
 });
 
 export default function CreateClientModal(props: ModalProps) {
-  const [selectedPeople, setSelectedPeople] = useState([people[2], people[4]]);
-  const [notes, setNotes] = useState<string[]>([]);
-  const [query, setQuery] = useState("");
-
-  const filteredPeople =
-    query === ""
-      ? people
-      : people.filter((person) =>
-          person.name
-            .toLowerCase()
-            .replace(/\s+/g, "")
-            .includes(query.toLowerCase().replace(/\s+/g, ""))
-        );
   const { handleChange } = props;
-
   const utils = api.useContext();
-
   const [error, setError] = useState<string>("");
+
+  const methods = useZodForm({
+    schema: createClientValidationSchema,
+    defaultValues: {
+      firstName: "",
+      lastName: "",
+      email: "",
+      age: 0,
+      homePhone: "",
+      cellPhone: "",
+      notes: [],
+      image: null,
+    },
+  });
 
   const createClientMutation = api.clients.create.useMutation({
     async onMutate(client) {
@@ -75,20 +64,6 @@ export default function CreateClientModal(props: ModalProps) {
     },
     onError(error) {
       setError(error.message);
-    },
-  });
-
-  const methods = useZodForm({
-    schema: createClientValidationSchema,
-    defaultValues: {
-      firstName: "",
-      lastName: "",
-      email: "",
-      age: 0,
-      homePhone: "",
-      cellPhone: "",
-      notes: [],
-      image: null,
     },
   });
 
@@ -151,17 +126,12 @@ export default function CreateClientModal(props: ModalProps) {
               />
             </div>
 
-            <Autocomplete
-              multiple
-              id="tags-filled"
-              value={notes}
-              {...methods.register("notes")}
+            <ControlledAutocomplete
+              control={methods.control}
+              name="notes"
+              id="notes"
               options={[]}
-              onChange={(e, value) => setNotes(value)}
-              freeSolo
-              renderInput={(params) => (
-                <TextField {...params} label="Notes" placeholder="Notes" />
-              )}
+              label="Notes"
             />
 
             <FormSubmit>Create</FormSubmit>

@@ -20,6 +20,7 @@ interface NavbarGroupProps {
 
 export default function Navbar() {
   const { data: session } = useSession();
+
   return (
     <nav
       className="mx-auto h-[60px] w-full max-w-[85rem] px-4 sm:flex sm:items-center sm:justify-between"
@@ -36,22 +37,24 @@ export default function Navbar() {
           src="/bna_black.png"
         />
       </Link>
-      <NavbarGroup session={session}>
-        <NavbarLink href="/">Dashboard</NavbarLink>
-        <NavbarLink href="/clients">Clients</NavbarLink>
-        <NavbarLink href="/messages">Messages</NavbarLink>
-        <NavbarLink href="/terminal">Terminal</NavbarLink>
-        <NavbarLink href="/events">Events</NavbarLink>
-        <NavbarLink admin href="/admin/memberships">
-          Memberships
-        </NavbarLink>
-        <NavbarLink admin href="/admin/rooms">
-          Rooms
-        </NavbarLink>
-        <NavbarLink admin href="/admin/users">
-          Users
-        </NavbarLink>
-      </NavbarGroup>
+      {session?.user && (
+        <NavbarGroup session={session}>
+          <NavbarLink href="/">Dashboard</NavbarLink>
+          <NavbarLink href="/clients">Clients</NavbarLink>
+          <NavbarLink href="/messages">Messages</NavbarLink>
+          <NavbarLink href="/terminal">Terminal</NavbarLink>
+          <NavbarLink href="/events">Events</NavbarLink>
+          <NavbarLink admin href="/admin/memberships">
+            Memberships
+          </NavbarLink>
+          <NavbarLink admin href="/admin/rooms">
+            Rooms
+          </NavbarLink>
+          <NavbarLink admin href="/admin/users">
+            Users
+          </NavbarLink>
+        </NavbarGroup>
+      )}
       <button
         onClick={session ? () => void signOut() : () => void signIn()}
         className="text-sm"

@@ -1,13 +1,12 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { api } from "~/utils/api";
 import { z } from "zod";
 import FormModal from "../modal/formModal";
 import { FormInput } from "../modal/formInput";
 import { FormSubmit } from "../modal/formSubmit";
 import { useZodForm } from "~/utils/useZodForm";
-import Autocomplete from "@mui/material/Autocomplete";
-import TextField from "@mui/material/TextField";
 import { Client } from "@prisma/client";
+import ControlledAutocomplete from "../library/ControlledAutocomplete";
 
 type ModalProps = {
   open: boolean;
@@ -29,43 +28,36 @@ export const editClientValidationSchema = z.object({
 });
 
 export default function EditClientModal(props: ModalProps) {
-  const [notes, setNotes] = useState<string[]>([]);
-
-  const { handleChange, client } = props;
-
+  const { handleChange } = props;
   const utils = api.useContext();
-
   const [error, setError] = useState<string>("");
+
+  const {
+    reset,
+    handleSubmit,
+    register,
+    control,
+    formState: { errors },
+  } = useZodForm({
+    schema: editClientValidationSchema,
+    defaultValues: useMemo(() => {
+      return props.client;
+    }, [props.client]),
+  });
+
+  // reset form when client changes
+  useEffect(() => {
+    reset(props.client);
+  }, [props.client, reset]);
 
   const updateClientMutation = api.clients.update.useMutation({
     async onMutate(newClient) {
       // cancel queries
-      await utils.clients.all.cancel();
-
-      const client = utils.clients.id.getData({
+      await utils.clients.id.cancel();
+      const client = await utils.clients.id.getData({
         id: newClient.id,
       });
-
       if (!client) return;
-
-      // fetch all clients
-      const allClients = await utils.clients.all.fetch();
-
-      if (!allClients) return;
-
-      // update all clients
-      utils.clients.all.setData(
-        undefined,
-        allClients.map((c) => {
-          if (c.id === client.id) {
-            return {
-              ...c,
-              ...newClient,
-            };
-          }
-          return c;
-        })
-      );
 
       // update client
       utils.clients.id.setData(
@@ -84,21 +76,6 @@ export default function EditClientModal(props: ModalProps) {
     },
   });
 
-  const methods = useZodForm({
-    schema: editClientValidationSchema,
-    defaultValues: {
-      id: client.id,
-      firstName: client.firstName,
-      lastName: client.lastName,
-      email: client.email,
-      age: client.age,
-      homePhone: client.homePhone,
-      cellPhone: client.cellPhone,
-      notes: client.notes,
-      image: client.image,
-    },
-  });
-
   return (
     <FormModal {...props}>
       <div className="w-full rounded-lg bg-white shadow dark:border dark:border-gray-700 dark:bg-gray-800  ">
@@ -108,37 +85,37 @@ export default function EditClientModal(props: ModalProps) {
           </h1>
           <form
             className="space-y-4 md:space-y-6"
-            onSubmit={methods.handleSubmit((data) =>
-              updateClientMutation.mutate(data)
-            )}
+            onSubmit={handleSubmit((data) => updateClientMutation.mutate(data))}
           >
             <div className="grid grid-cols-2 gap-4">
               <FormInput
                 attribute="firstName"
                 placeholder="First Name"
-                register={methods.register}
-                errors={methods.formState.errors}
+                register={register}
+                errors={errors}
+                required
               />
               <FormInput
                 attribute="lastName"
                 placeholder="Last Name"
-                register={methods.register}
-                errors={methods.formState.errors}
+                register={register}
+                errors={errors}
+                required
               />
             </div>
             <div className="grid grid-cols-[9fr_3fr] gap-4">
               <FormInput
                 attribute="email"
                 placeholder="Email Address"
-                register={methods.register}
-                errors={methods.formState.errors}
+                register={register}
+                errors={errors}
               />
 
               <FormInput
                 attribute="age"
                 placeholder="Age"
-                register={methods.register}
-                errors={methods.formState.errors}
+                register={register}
+                errors={errors}
                 type="number"
               />
             </div>
@@ -146,29 +123,24 @@ export default function EditClientModal(props: ModalProps) {
               <FormInput
                 attribute="homePhone"
                 placeholder="Home Number"
-                register={methods.register}
-                errors={methods.formState.errors}
+                register={register}
+                errors={errors}
               />
 
               <FormInput
                 attribute="cellPhone"
                 placeholder="Cell Number"
-                register={methods.register}
-                errors={methods.formState.errors}
+                register={register}
+                errors={errors}
               />
             </div>
 
-            <Autocomplete
-              multiple
-              id="tags-filled"
-              value={notes}
-              {...methods.register("notes")}
+            <ControlledAutocomplete
+              control={control}
+              name="notes"
+              id="notes"
               options={[]}
-              onChange={(e, value) => setNotes(value)}
-              freeSolo
-              renderInput={(params) => (
-                <TextField {...params} label="Notes" placeholder="Notes" />
-              )}
+              label="Notes"
             />
 
             <FormSubmit>Save</FormSubmit>

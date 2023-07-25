@@ -17,7 +17,7 @@ const Client = () => {
     setOpen(v);
   };
 
-  const { data: client } = api.clients.id.useQuery(
+  const { data } = api.clients.id.useQuery(
     { id: router.query.id as string },
     {
       staleTime: 3000,
@@ -54,8 +54,10 @@ const Client = () => {
     }
   }, [number, utils, router.query.id]);
 
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  const client = data!;
+
   if (!client) {
-    router.push("/clients");
     return null;
   }
 
@@ -115,7 +117,14 @@ export const getStaticPaths = async () => {
 
 export const getStaticProps = async ({ params }: GetStaticPropsContext) => {
   const ssg = ssgInit();
-  await ssg.clients.id.prefetch({ id: params?.id as string });
+  const client = await ssg.clients.id.fetch({ id: params?.id as string });
+
+  if (!client) {
+    return {
+      notFound: true,
+    };
+  }
+
   return {
     props: {
       trpcState: ssg.dehydrate(),

@@ -11,6 +11,8 @@ export default function ControlledSelect({
   labelId,
   selectId,
   values,
+  user,
+  client,
 }: {
   name: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -20,6 +22,8 @@ export default function ControlledSelect({
   selectId: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   values: any[] | undefined;
+  user?: boolean;
+  client?: boolean;
 }) {
   return (
     <Controller
@@ -36,8 +40,13 @@ export default function ControlledSelect({
             onChange={(e) => field.onChange(e.target.value)}
           >
             {values?.map((v) => (
-              <MenuItem key={v.id} value={JSON.stringify(v)}>
-                <ListItemText primary={`${v.firstName} ${v.lastName}`} />
+              <MenuItem
+                key={user || client ? v.id : v}
+                value={user || client ? JSON.stringify(v) : v}
+              >
+                <ListItemText
+                  primary={user || client ? `${v.firstName} ${v.lastName}` : v}
+                />
               </MenuItem>
             ))}
           </Select>

@@ -1,11 +1,6 @@
 import { z } from "zod";
-import {
-  createTRPCRouter,
-  publicProcedure,
-  protectedProcedure,
-} from "~/server/api/trpc";
+import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { PrismaClient } from "@prisma/client";
-import { createEventValidationSchema } from "~/pages/events";
 
 const prisma = new PrismaClient();
 

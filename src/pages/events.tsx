@@ -114,6 +114,7 @@ const Events = () => {
           labelId="client-label"
           selectId="client-select"
           values={clients}
+          client
         />
 
         <button type="submit">Create check</button>

@@ -96,7 +96,7 @@ const Room = () => {
             End Time: {moment(room.endTime).format("h:mm a")}
           </p>
           <p className="text-gray-500">Users:</p>
-          {room.users.map((m) => (
+          {room.users?.map((m) => (
             <a className="text-gray-500" key={m.id}>
               {" "}
               {m.firstName} {m.lastName},

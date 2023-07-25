@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { api } from "~/utils/api";
 import { z } from "zod";
 import { FormSubmit } from "../modal/formSubmit";
@@ -61,7 +61,7 @@ export default function EditRoomModal(props: ModalProps) {
         // update all clients
         utils.rooms.all.setData(
           undefined,
-          allRooms.map((m) => {
+          allRooms?.map((m) => {
             if (m.id === room.id) {
               return {
                 ...m,
@@ -90,7 +90,7 @@ export default function EditRoomModal(props: ModalProps) {
         handleChange(false);
 
         // need to stringify users for the form
-        const updatedUserIds = updatedUsers.map((u) => JSON.stringify(u));
+        const updatedUserIds = updatedUsers?.map((u) => JSON.stringify(u));
 
         // reset form with updated data
         form.reset({
@@ -109,11 +109,23 @@ export default function EditRoomModal(props: ModalProps) {
 
   const form = useZodForm({
     schema: editRoomValidationSchema,
-    defaultValues: {
-      ...room,
-      userIds: room.users.map((u) => JSON.stringify(u)),
-    },
+    defaultValues: useMemo(() => {
+      return {
+        ...room,
+        userIds: room.users?.map((u) => JSON.stringify(u)),
+      };
+    }, [room]),
   });
+
+  const reset = form.reset;
+
+  useEffect(() => {
+    console.log(room);
+    reset({
+      ...room,
+      userIds: room.users?.map((u) => JSON.stringify(u)),
+    });
+  }, [room, reset]);
 
   // get dirty fields
   const dirtyFields = form.formState.dirtyFields;

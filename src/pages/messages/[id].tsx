@@ -185,7 +185,13 @@ export const getStaticPaths = async () => {
 
 export const getStaticProps = async ({ params }: GetStaticPropsContext) => {
   const ssg = ssgInit();
-  await ssg.message.id.prefetch({ id: params?.id as string });
+  const message = await ssg.message.id.fetch({ id: params?.id as string });
+
+  if (!message) {
+    return {
+      notFound: true,
+    };
+  }
   return {
     props: {
       trpcState: ssg.dehydrate(),

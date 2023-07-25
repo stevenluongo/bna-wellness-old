@@ -82,12 +82,6 @@ export default function EditClientModal(props: ModalProps) {
     onError(error) {
       setError(error.message);
     },
-    async onSuccess() {
-      const res = await fetch(
-        `/api/revalidate?secret=${process.env.NEXT_PUBLIC_MY_SECRET_TOKEN}&path=/clients/${client.id}`
-      );
-      console.log(res);
-    },
   });
 
   const methods = useZodForm({

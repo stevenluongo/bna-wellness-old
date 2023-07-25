@@ -21,10 +21,6 @@ export const editUserValidationSchema = z.object({
 });
 
 export default function EditUserModal(props: ModalProps) {
-  const { data: users } = api.users.all.useQuery(undefined, {
-    staleTime: 10000,
-  });
-
   const { handleChange, user } = props;
 
   const utils = api.useContext();
@@ -85,12 +81,6 @@ export default function EditUserModal(props: ModalProps) {
     },
     onError(error) {
       setError(error.message);
-    },
-    async onSuccess() {
-      const res = await fetch(
-        `/api/revalidate?secret=${process.env.NEXT_PUBLIC_MY_SECRET_TOKEN}&path=/admin/users/${user.id}`
-      );
-      console.log(res);
     },
   });
 

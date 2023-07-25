@@ -89,11 +89,13 @@ const Client = () => {
           <p className="text-gray-500">Age: {client.age}</p>
         </div>
         <button onClick={() => setOpen(true)}>Edit</button>
-        <EditClientModal
-          open={open}
-          handleChange={handleChange}
-          client={client}
-        />
+        {open && (
+          <EditClientModal
+            open={open}
+            handleChange={handleChange}
+            client={client}
+          />
+        )}
       </div>
     </div>
   );
@@ -120,5 +122,6 @@ export const getStaticProps = async ({ params }: GetStaticPropsContext) => {
     props: {
       trpcState: ssg.dehydrate(),
     },
+    revalidate: 1,
   };
 };

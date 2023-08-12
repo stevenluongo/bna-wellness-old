@@ -63,7 +63,6 @@ export default function CreateRoomModal(props: ModalProps) {
             createdAt: new Date(),
             id: `${Math.random()}`,
             updatedAt: new Date(),
-            events: [],
             ...room,
           },
         ]);

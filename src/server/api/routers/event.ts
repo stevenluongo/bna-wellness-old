@@ -40,6 +40,26 @@ export const eventsRouter = createTRPCRouter({
             ],
           },
         },
+        include: {
+          checks: {
+            include: {
+              trainer: {
+                select: {
+                  firstName: true,
+                  lastName: true,
+                  id: true,
+                },
+              },
+              client: {
+                select: {
+                  firstName: true,
+                  lastName: true,
+                  id: true,
+                },
+              },
+            },
+          },
+        },
       });
     }),
 });

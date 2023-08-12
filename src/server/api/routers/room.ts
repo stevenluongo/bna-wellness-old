@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { date, z } from "zod";
 import {
   createTRPCRouter,
   publicProcedure,
@@ -17,19 +17,6 @@ export const roomRouter = createTRPCRouter({
         orderBy: {
           createdAt: "asc",
         },
-        include: {
-          events: {
-            include: {
-              checks: {
-                include: {
-                  client: true,
-                  terminal: true,
-                  trainer: true,
-                },
-              },
-            },
-          },
-        },
       });
     } catch (error) {
       throw error;
@@ -39,6 +26,9 @@ export const roomRouter = createTRPCRouter({
   ids: publicProcedure.query(async () => {
     try {
       return await prisma.room.findMany({
+        orderBy: {
+          createdAt: "asc",
+        },
         select: {
           id: true,
         },
@@ -66,6 +56,28 @@ export const roomRouter = createTRPCRouter({
                 role: true,
                 createdAt: true,
                 title: true,
+              },
+            },
+            events: {
+              include: {
+                checks: {
+                  include: {
+                    trainer: {
+                      select: {
+                        firstName: true,
+                        lastName: true,
+                        id: true,
+                      },
+                    },
+                    client: {
+                      select: {
+                        firstName: true,
+                        lastName: true,
+                        id: true,
+                      },
+                    },
+                  },
+                },
               },
             },
           },

@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import React, { ReactElement, ReactNode } from "react";
+import { api } from "~/utils/api";
 
 interface NavbarLinkProps {
   href: string;
@@ -43,7 +44,7 @@ export default function Navbar() {
           <NavbarLink href="/clients">Clients</NavbarLink>
           <NavbarLink href="/messages">Messages</NavbarLink>
           <NavbarLink href="/terminal">Terminal</NavbarLink>
-          <NavbarLink href="/events">Events</NavbarLink>
+          <NavbarEventsLink href="/events">Events</NavbarEventsLink>
           <NavbarLink admin href="/admin/memberships">
             Memberships
           </NavbarLink>
@@ -93,5 +94,39 @@ export function NavbarLink(props: NavbarLinkProps) {
     <Link className={`text-sm ${classes}`} href={href}>
       {children}
     </Link>
+  );
+}
+
+export function NavbarEventsLink(props: NavbarLinkProps) {
+  const { href, children, pathname, admin, isAdmin } = props;
+  const router = useRouter();
+  const utils = api.useContext();
+  if (admin && !isAdmin) {
+    return null;
+  }
+  const classes =
+    pathname === href
+      ? "text-blue-500 hover:text-blue-300"
+      : "text-gray-600 hover:text-gray-400";
+  return (
+    <a
+      className={`text-sm ${classes} cursor-pointer`}
+      onClick={async () => {
+        const defaultEvent = JSON.parse(
+          localStorage.getItem("defaultEvent") || "{}"
+        );
+        if (!defaultEvent.value) {
+          const rooms = await utils.rooms.ids.fetch();
+          localStorage.setItem(
+            "defaultEvent",
+            JSON.stringify({ value: rooms[0]?.id })
+          );
+          return router.push(`${href}/${rooms[0]?.id}`);
+        }
+        router.push(`${href}/${defaultEvent.value}`);
+      }}
+    >
+      {children}
+    </a>
   );
 }

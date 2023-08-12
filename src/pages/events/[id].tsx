@@ -15,6 +15,7 @@ import CreateEventModal from "~/components/events/createEventModal";
 import EventTimeslot from "~/components/events/timeslots/EventTimeslot";
 import EmptyTimeslot from "~/components/events/timeslots/EmptyTimeslot";
 import { useIsMutating } from "@tanstack/react-query";
+import { useSession } from "next-auth/react";
 
 const Events = () => {
   const [timeslotModalOpen, setTimeslotModalOpen] = useState(false);
@@ -29,8 +30,11 @@ const Events = () => {
   );
   const room = roomData!;
 
+  const { data: session } = useSession();
+  const user = session!.user;
+
   const scheduleTimes = useScheduleTimes(room);
-  const blockedTimes = useBlockedTimes(room.events);
+  const blockedTimes = useBlockedTimes(room.events, user.id);
   const currentWeek = useCurrentWeek();
 
   const openTimeslotModal = (date: Moment) => {
@@ -51,7 +55,7 @@ const Events = () => {
     // doing this here rather than in `onSettled()`
     // to avoid race conditions if you're clicking fast
     if (number === 0) {
-      void utils.rooms.id.invalidate();
+      void utils.rooms.all.invalidate();
     }
   }, [number, utils]);
 
@@ -86,7 +90,9 @@ const Events = () => {
                     .minute(time.minute());
                   // find event for this timeslot
                   const event = room.events.find(
-                    (e) => e.startTime.toISOString() === current.toISOString()
+                    (e) =>
+                      e.startTime.toISOString() === current.toISOString() &&
+                      e.trainerId === user.id
                   );
                   // if event exists, render it
                   if (event) {

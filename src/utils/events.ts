@@ -30,11 +30,12 @@ export const useCurrentWeek = () =>
     return dates;
   }, []);
 
-export const useBlockedTimes = (events: Event[]) =>
+export const useBlockedTimes = (events: Event[], userId: string) =>
   useMemo(() => {
     const blockedTimes = new Map();
     const interval = 30; // in minutes
     for (const event of events) {
+      if (event.trainerId !== userId) continue;
       const start = moment(event.startTime);
       const end = moment(event.endTime);
       while (start < end) {
@@ -44,7 +45,7 @@ export const useBlockedTimes = (events: Event[]) =>
       }
     }
     return blockedTimes;
-  }, [events]);
+  }, [events, userId]);
 
 export const useScheduleTimes = (room: Room) =>
   useMemo(() => {

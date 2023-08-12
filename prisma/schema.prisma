@@ -29,6 +29,7 @@ model User {
   terminals Terminal[]
   rooms     Room[]
   checks    Check[]
+  events    Event[]
 }
 
 model Terminal {
@@ -88,6 +89,8 @@ model Event {
   room      Room     @relation(fields: [roomId], references: [id])
   roomId    String
   checks    Check[]
+  trainer   User     @relation(fields: [trainerId], references: [id])
+  trainerId String
 }
 
 model Client {

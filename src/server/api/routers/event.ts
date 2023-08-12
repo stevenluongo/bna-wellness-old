@@ -29,6 +29,11 @@ export const eventsRouter = createTRPCRouter({
               id: roomId,
             },
           },
+          trainer: {
+            connect: {
+              id: trainerId,
+            },
+          },
           checks: {
             create: [
               {

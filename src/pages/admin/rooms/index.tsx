@@ -17,9 +17,7 @@ const columnHelper = createColumnHelper<Room>();
 
 const Rooms = () => {
   const [open, setOpen] = useState(false);
-
   const router = useRouter();
-
   const utils = api.useContext();
 
   const { data } = api.rooms.all.useQuery(undefined, {

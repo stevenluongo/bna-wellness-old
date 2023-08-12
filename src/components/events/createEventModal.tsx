@@ -47,7 +47,7 @@ const CreateEventModal = (props: ModalProps) => {
     defaultValues: useMemo(() => {
       return {
         startTime: props.timeslot?.toDate(),
-        endTime: props.timeslot?.add(30, "minutes").toDate(),
+        endTime: props.timeslot?.clone().add(30, "minutes").toDate(),
         weekStart: moment().startOf("week").toDate(),
         roomId: props.roomId,
         trainerId: user.id,
@@ -61,7 +61,7 @@ const CreateEventModal = (props: ModalProps) => {
   useEffect(() => {
     reset({
       startTime: props.timeslot?.toDate(),
-      endTime: props.timeslot?.add(30, "minutes").toDate(),
+      endTime: props.timeslot?.clone().add(30, "minutes").toDate(),
       weekStart: moment().startOf("week").toDate(),
       roomId: props.roomId,
       trainerId: user.id,

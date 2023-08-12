@@ -20,7 +20,8 @@ export const eventsRouter = createTRPCRouter({
     .mutation(async ({ input }) => {
       const { clientId, terminalId, trainerId, roomId, weekStart, ...rest } =
         input;
-      return await prisma.event.create({
+
+      const event = await prisma.event.create({
         data: {
           ...rest,
           room: {
@@ -61,5 +62,6 @@ export const eventsRouter = createTRPCRouter({
           },
         },
       });
+      return event;
     }),
 });

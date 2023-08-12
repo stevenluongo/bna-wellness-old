@@ -6,11 +6,13 @@ export default function ControlledTimePicker({
   control,
   name,
   label,
+  disabled,
 }: {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   control: Control<any>;
   name: string;
   label: string;
+  disabled?: boolean;
 }) {
   return (
     <Controller
@@ -19,6 +21,7 @@ export default function ControlledTimePicker({
       render={({ field }) => (
         <TimePicker
           label={label}
+          disabled={disabled}
           ampm
           value={moment(field.value)}
           onChange={(date) => date && field.onChange(date.toDate() as Date)}

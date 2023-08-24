@@ -1,19 +1,32 @@
-import { Event } from "@prisma/client";
 import { countIntervals } from "~/utils/events";
+import { Prisma } from "@prisma/client";
 
-interface EventWithChecks extends Event {
-  checks: {
-    client: {
-      firstName: string;
-      lastName: string;
+export type EventWithChecks = Prisma.EventGetPayload<{
+  include: {
+    checks: {
+      include: {
+        client: {
+          select: {
+            firstName: true;
+            lastName: true;
+          };
+        };
+        trainer: {
+          select: {
+            firstName: true;
+          };
+        };
+      };
     };
-    trainer: {
-      firstName: string;
-    };
-  }[];
-}
+  };
+}>;
 
-const EventTimeslot = ({ event }: { event: EventWithChecks }) => {
+const EventTimeslot = ({
+  event,
+}: {
+  event: EventWithChecks;
+  handleClick: () => void;
+}) => {
   return (
     <td
       rowSpan={countIntervals(event.startTime, event.endTime)}

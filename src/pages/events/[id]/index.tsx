@@ -7,19 +7,27 @@ import { useRouter } from "next/router";
 import { GetStaticPropsContext } from "next";
 import { useEffect, useState } from "react";
 import {
+  setMomentTime,
   useBlockedTimes,
   useCurrentWeek,
   useScheduleTimes,
 } from "~/utils/events";
 import CreateEventModal from "~/components/events/createEventModal";
-import EventTimeslot from "~/components/events/timeslots/EventTimeslot";
+import EventTimeslot, {
+  EventWithChecks,
+} from "~/components/events/timeslots/EventTimeslot";
 import EmptyTimeslot from "~/components/events/timeslots/EmptyTimeslot";
 import { useIsMutating } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
+import EditEventModal from "~/components/events/editEventModal";
 
 const Events = () => {
   const [timeslotModalOpen, setTimeslotModalOpen] = useState(false);
+  const [eventModalOpen, setEventModalOpen] = useState(false);
   const [currentTimeslot, setCurrentTimeslot] = useState<Moment | null>(null);
+  const [currentEvent, setCurrentEvent] = useState<EventWithChecks | null>(
+    null
+  );
 
   const router = useRouter();
   const { data: roomData } = api.rooms.id.useQuery(
@@ -47,6 +55,18 @@ const Events = () => {
     setCurrentTimeslot(null);
   };
 
+  const openEventModal = (date: Moment, event: EventWithChecks) => {
+    setTimeslotModalOpen(true);
+    setCurrentTimeslot(date);
+    setCurrentEvent(event);
+  };
+
+  const handleEventModalChange = (v: boolean) => {
+    setTimeslotModalOpen(v);
+    setCurrentTimeslot(null);
+    setCurrentEvent(null);
+  };
+
   const utils = api.useContext();
   const number = useIsMutating();
 
@@ -55,7 +75,7 @@ const Events = () => {
     // doing this here rather than in `onSettled()`
     // to avoid race conditions if you're clicking fast
     if (number === 0) {
-      void utils.rooms.all.invalidate();
+      void utils.rooms.id.invalidate();
     }
   }, [number, utils]);
 
@@ -84,10 +104,7 @@ const Events = () => {
                 <th className="table_head">{time.format("h:mm A")}</th>
                 {currentWeek.map((date) => {
                   // set the current date and time for this timeslot
-                  const current = date
-                    .clone()
-                    .hour(time.hour())
-                    .minute(time.minute());
+                  const current = setMomentTime(date, time);
                   // find event for this timeslot
                   const event = room.events.find(
                     (e) =>
@@ -96,7 +113,13 @@ const Events = () => {
                   );
                   // if event exists, render it
                   if (event) {
-                    return <EventTimeslot key={event.id} event={event} />;
+                    return (
+                      <EventTimeslot
+                        key={event.id}
+                        event={event}
+                        handleClick={() => openEventModal(current, event)}
+                      />
+                    );
                   }
                   // if blocked, render nothing
                   if (blockedTimes.has(current.toISOString())) {
@@ -119,6 +142,13 @@ const Events = () => {
         open={timeslotModalOpen}
         handleChange={handleTimeslotModalChange}
         timeslot={currentTimeslot}
+        roomId={room.id}
+      />
+      <EditEventModal
+        open={eventModalOpen}
+        handleChange={handleTimeslotModalChange}
+        timeslot={currentTimeslot}
+        event={currentEvent}
         roomId={room.id}
       />
     </div>

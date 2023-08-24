@@ -10,6 +10,7 @@ import { terminalRouter } from "./routers/terminal";
 import { roomRouter } from "./routers/room";
 import { userRouter } from "./routers/user";
 import { eventsRouter } from "./routers/event";
+import { weeksRouter } from "./routers/week";
 
 /**
  * This is the primary router for your server.
@@ -28,6 +29,7 @@ export const appRouter = createTRPCRouter({
   rooms: roomRouter,
   users: userRouter,
   events: eventsRouter,
+  weeks: weeksRouter,
 });
 
 // export type definition of API

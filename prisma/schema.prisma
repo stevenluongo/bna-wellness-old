@@ -81,6 +81,13 @@ model Room {
   events           Event[]
 }
 
+model Week {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  date      String
+  events    Event[]
+}
+
 model Event {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
@@ -91,6 +98,8 @@ model Event {
   checks    Check[]
   trainer   User     @relation(fields: [trainerId], references: [id])
   trainerId String
+  week      Week     @relation(fields: [weekId], references: [id])
+  weekId    String
 }
 
 model Client {

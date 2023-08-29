@@ -1,4 +1,4 @@
-import { date, z } from "zod";
+import { z } from "zod";
 import {
   createTRPCRouter,
   publicProcedure,
@@ -10,21 +10,25 @@ import { editRoomValidationSchema } from "~/components/rooms/editRoomModal";
 
 const prisma = new PrismaClient();
 
-export const roomRouter = createTRPCRouter({
-  all: publicProcedure.query(async () => {
-    try {
-      return await prisma.room.findMany({
-        orderBy: {
-          createdAt: "asc",
-        },
-        include: {
-          weeks: true,
-        },
-      });
-    } catch (error) {
-      throw error;
-    }
-  }),
+export const checkRouter = createTRPCRouter({
+  week: publicProcedure
+    .input(z.object({ roomId: z.string(), weekStart: z.string() }))
+    .query(async ({ input }) => {
+      const { weekStart, roomId } = input;
+      try {
+        return await prisma.check.findMany({
+          where: {
+            weekStart,
+            roomId,
+          },
+          orderBy: {
+            createdAt: "asc",
+          },
+        });
+      } catch (error) {
+        throw error;
+      }
+    }),
 
   ids: publicProcedure.query(async () => {
     try {
@@ -61,6 +65,7 @@ export const roomRouter = createTRPCRouter({
                 title: true,
               },
             },
+            checks: true,
           },
         });
       } catch (error) {

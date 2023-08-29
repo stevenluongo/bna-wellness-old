@@ -21,50 +21,18 @@ export const weeksRouter = createTRPCRouter({
     }
   }),
 
-  dates: publicProcedure.query(async () => {
-    try {
-      return await prisma.week.findMany({
-        orderBy: {
-          createdAt: "asc",
-        },
-        select: {
-          date: true,
-        },
-      });
-    } catch (error) {
-      throw error;
-    }
-  }),
-
-  date: publicProcedure
-    .input(z.object({ date: z.string() }))
+  id: publicProcedure
+    .input(z.object({ weekStart: z.string(), roomId: z.string() }))
     .query(async ({ input }) => {
       try {
         return await prisma.week.findFirst({
           where: {
-            date: input.date,
+            start: input.weekStart,
           },
           include: {
-            events: {
-              include: {
-                checks: {
-                  include: {
-                    trainer: {
-                      select: {
-                        firstName: true,
-                        lastName: true,
-                        id: true,
-                      },
-                    },
-                    client: {
-                      select: {
-                        firstName: true,
-                        lastName: true,
-                        id: true,
-                      },
-                    },
-                  },
-                },
+            checks: {
+              where: {
+                roomId: input.roomId,
               },
             },
           },
@@ -74,17 +42,38 @@ export const weeksRouter = createTRPCRouter({
       }
     }),
 
+  dates: publicProcedure.query(async () => {
+    try {
+      return await prisma.week.findMany({
+        orderBy: {
+          createdAt: "asc",
+        },
+        select: {
+          start: true,
+        },
+      });
+    } catch (error) {
+      throw error;
+    }
+  }),
+
   create: protectedProcedure
     .input(
       z.object({
-        date: z.string(),
+        weekStart: z.string(),
+        roomId: z.string(),
       })
     )
     .mutation(async ({ input }) => {
       try {
         return await prisma.week.create({
           data: {
-            date: input.date,
+            start: input.weekStart,
+            rooms: {
+              connect: {
+                id: input.roomId,
+              },
+            },
           },
         });
       } catch (error) {

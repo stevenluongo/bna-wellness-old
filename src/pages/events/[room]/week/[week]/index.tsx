@@ -13,9 +13,7 @@ import {
   useScheduleTimes,
 } from "~/utils/events";
 import CreateEventModal from "~/components/events/createEventModal";
-import EventTimeslot, {
-  EventWithChecks,
-} from "~/components/events/timeslots/EventTimeslot";
+import EventTimeslot from "~/components/events/timeslots/EventTimeslot";
 import EmptyTimeslot from "~/components/events/timeslots/EmptyTimeslot";
 import { useIsMutating } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
@@ -25,13 +23,44 @@ const Events = () => {
   const [timeslotModalOpen, setTimeslotModalOpen] = useState(false);
   const [eventModalOpen, setEventModalOpen] = useState(false);
   const [currentTimeslot, setCurrentTimeslot] = useState<Moment | null>(null);
-  const [currentEvent, setCurrentEvent] = useState<EventWithChecks | null>(
-    null
-  );
+
+  const createWeekMutation = api.weeks.create.useMutation({
+    async onMutate(data) {
+      utils.weeks.id.setData(
+        { weekStart: data.weekStart, roomId: data.roomId },
+        {
+          start: data.weekStart,
+          checks: [],
+          createdAt: new Date(),
+        }
+      );
+    },
+  });
 
   const router = useRouter();
+
+  const { data: week } = api.weeks.id.useQuery(
+    {
+      weekStart: router.query.week as string,
+      roomId: router.query.room as string,
+    },
+    {
+      staleTime: 10000,
+    }
+  );
+
   const { data: roomData } = api.rooms.id.useQuery(
-    { id: router.query.id as string },
+    { id: router.query.room as string },
+    {
+      staleTime: 10000,
+    }
+  );
+
+  const { data: checks } = api.checks.week.useQuery(
+    {
+      weekStart: router.query.week as string,
+      roomId: router.query.room as string,
+    },
     {
       staleTime: 10000,
     }
@@ -42,8 +71,11 @@ const Events = () => {
   const user = session!.user;
 
   const scheduleTimes = useScheduleTimes(room);
-  const blockedTimes = useBlockedTimes(room.events, user.id);
-  const currentWeek = useCurrentWeek();
+  const blockedTimes = useBlockedTimes({
+    checks,
+    trainerId: user.id,
+  });
+  const { dates: currentWeek } = useCurrentWeek();
 
   const openTimeslotModal = (date: Moment) => {
     setTimeslotModalOpen(true);
@@ -55,32 +87,34 @@ const Events = () => {
     setCurrentTimeslot(null);
   };
 
-  const openEventModal = (date: Moment, event: EventWithChecks) => {
-    setTimeslotModalOpen(true);
-    setCurrentTimeslot(date);
-    setCurrentEvent(event);
-  };
-
   const handleEventModalChange = (v: boolean) => {
     setTimeslotModalOpen(v);
     setCurrentTimeslot(null);
-    setCurrentEvent(null);
   };
 
   const utils = api.useContext();
   const number = useIsMutating();
 
   useEffect(() => {
+    if (!week) {
+      createWeekMutation.mutate({
+        weekStart: router.query.week as string,
+        roomId: router.query.room as string,
+      });
+    }
+  }, []);
+
+  useEffect(() => {
     // invalidate queries when mutations have settled
     // doing this here rather than in `onSettled()`
     // to avoid race conditions if you're clicking fast
     if (number === 0) {
-      void utils.rooms.id.invalidate();
+      void utils.weeks.id.invalidate();
     }
   }, [number, utils]);
 
-  if (!room) {
-    return <p>No Room</p>;
+  if (!week) {
+    return <p>no Week</p>;
   }
 
   return (
@@ -105,19 +139,19 @@ const Events = () => {
                 {currentWeek.map((date) => {
                   // set the current date and time for this timeslot
                   const current = setMomentTime(date, time);
-                  // find event for this timeslot
-                  const event = room.events.find(
-                    (e) =>
-                      e.startTime.toISOString() === current.toISOString() &&
-                      e.trainerId === user.id
+                  // find check for this timeslot
+                  const check = checks?.find(
+                    (c) =>
+                      c.startTime.toISOString() === current.toISOString() &&
+                      c.trainerId === user.id
                   );
                   // if event exists, render it
-                  if (event) {
+                  if (check) {
                     return (
                       <EventTimeslot
-                        key={event.id}
-                        event={event}
-                        handleClick={() => openEventModal(current, event)}
+                        key={check.id}
+                        // event={check}
+                        // handleClick={() => openEventModal(current, check)}
                       />
                     );
                   }
@@ -138,7 +172,7 @@ const Events = () => {
           })}
         </tbody>
       </table>
-      <CreateEventModal
+      {/* <CreateEventModal
         open={timeslotModalOpen}
         handleChange={handleTimeslotModalChange}
         timeslot={currentTimeslot}
@@ -150,7 +184,7 @@ const Events = () => {
         timeslot={currentTimeslot}
         event={currentEvent}
         roomId={room.id}
-      />
+      /> */}
     </div>
   );
 };
@@ -159,16 +193,31 @@ export default withAuth(Events);
 
 export const getStaticPaths = async () => {
   const ssg = ssgInit();
-  const rooms = await ssg.rooms.ids.fetch();
-  return {
-    paths: rooms.map((m) => ({ params: { id: m.id } })),
-    fallback: "blocking",
-  };
+  const rooms = await ssg.rooms.all.fetch();
+  const paths: { params: { week: string; room: string } }[] = [];
+
+  for (const room of rooms) {
+    for (const week of room.weeks) {
+      paths.push({
+        params: {
+          week: week.start,
+          room: room.id,
+        },
+      });
+    }
+  }
+
+  return { paths, fallback: "blocking" };
 };
 
 export const getStaticProps = async (ctx: GetStaticPropsContext) => {
   const ssg = ssgInit();
-  const room = await ssg.rooms.id.fetch({ id: ctx.params?.id as string });
+  const room = await ssg.rooms.id.fetch({ id: ctx.params?.room as string });
+
+  await ssg.weeks.id.prefetch({
+    weekStart: ctx.params?.week as string,
+    roomId: ctx.params?.room as string,
+  });
 
   if (!room) {
     return {

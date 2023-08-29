@@ -1,4 +1,4 @@
-import { Event, Room } from "@prisma/client";
+import { Check, Room } from "@prisma/client";
 import moment, { Moment } from "moment";
 import { useMemo } from "react";
 
@@ -27,17 +27,23 @@ export const useCurrentWeek = () =>
     }
 
     // return dates
-    return dates;
+    return { dates, start: weekStart.toISOString() };
   }, []);
 
-export const useBlockedTimes = (events: Event[], userId: string) =>
+export const useBlockedTimes = ({
+  checks = [],
+  trainerId,
+}: {
+  checks?: Check[];
+  trainerId: string;
+}) =>
   useMemo(() => {
     const blockedTimes = new Map();
     const interval = 30; // in minutes
-    for (const event of events) {
-      if (event.trainerId !== userId) continue;
-      const start = moment(event.startTime);
-      const end = moment(event.endTime);
+    for (const check of checks) {
+      if (check.trainerId !== trainerId) continue;
+      const start = moment(check.startTime);
+      const end = moment(check.endTime);
       while (start < end) {
         const timeSlot = start.toISOString();
         blockedTimes.set(timeSlot, true);
@@ -45,7 +51,7 @@ export const useBlockedTimes = (events: Event[], userId: string) =>
       }
     }
     return blockedTimes;
-  }, [events, userId]);
+  }, [checks, trainerId]);
 
 export const useScheduleTimes = (room: Room) =>
   useMemo(() => {

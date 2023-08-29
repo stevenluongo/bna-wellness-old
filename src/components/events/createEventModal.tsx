@@ -10,6 +10,7 @@ import { z } from "zod";
 import { api } from "~/utils/api";
 import { useSession } from "next-auth/react";
 import { useEffect, useMemo } from "react";
+import { useRouter } from "next/router";
 
 type ModalProps = {
   open: boolean;
@@ -27,6 +28,7 @@ export const createEventValidationSchema = z.object({
   trainerId: z.string(),
   terminalId: z.string(),
   clientId: z.string(),
+  weekId: z.string(),
 });
 
 const CreateEventModal = (props: ModalProps) => {
@@ -70,33 +72,16 @@ const CreateEventModal = (props: ModalProps) => {
     });
   }, [props.timeslot, reset, props.roomId, user, terminal]);
 
-  const createEventMutation = api.events.create.useMutation({
-    async onSuccess(event) {
-      // cancel queries
-      await utils.rooms.id.cancel();
-      const freshRoom = await utils.rooms.id.getData({
-        id: props.roomId,
-      });
-      if (!freshRoom) return;
-
-      utils.rooms.id.setData(
-        { id: freshRoom.id },
-        {
-          ...freshRoom,
-          events: [...freshRoom.events, event],
-        }
-      );
-    },
-  });
-
   const createEvent = (data: z.infer<typeof createEventValidationSchema>) => {
-    //need to parse the passed client id
-    data = {
-      ...data,
-      clientId: JSON.parse(data.clientId).id,
-    };
-    createEventMutation.mutate(data);
-    props.handleChange(false);
+    // //need to parse the passed client id
+    // data = {
+    //   ...data,
+    //   clientId: JSON.parse(data.clientId).id,
+    //   weekId:
+    // };
+    // createEventMutation.mutate(data);
+    // props.handleChange(false);
+    console.log(data);
   };
 
   return (

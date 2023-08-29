@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import React, { ReactElement, ReactNode } from "react";
 import { api } from "~/utils/api";
+import { useCurrentWeek } from "~/utils/events";
 
 interface NavbarLinkProps {
   href: string;
@@ -101,6 +102,20 @@ export function NavbarEventsLink(props: NavbarLinkProps) {
   const { href, children, pathname, admin, isAdmin } = props;
   const router = useRouter();
   const utils = api.useContext();
+  const { start } = useCurrentWeek();
+
+  const createEventMutation = api.weeks.create.useMutation({
+    async onMutate(date) {
+      try {
+      } catch (error) {
+        console.error(error);
+      }
+    },
+    onError(error) {
+      console.log(error);
+    },
+  });
+
   if (admin && !isAdmin) {
     return null;
   }
@@ -121,9 +136,9 @@ export function NavbarEventsLink(props: NavbarLinkProps) {
             "defaultEvent",
             JSON.stringify({ value: rooms[0]?.id })
           );
-          return router.push(`${href}/${rooms[0]?.id}`);
+          return router.push(`${href}/${rooms[0]?.id}/week/${start}`);
         }
-        router.push(`${href}/${defaultEvent.value}`);
+        router.push(`${href}/${defaultEvent.value}/week/${start}`);
       }}
     >
       {children}

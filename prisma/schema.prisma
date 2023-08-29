@@ -29,7 +29,6 @@ model User {
   terminals Terminal[]
   rooms     Room[]
   checks    Check[]
-  events    Event[]
 }
 
 model Terminal {
@@ -52,23 +51,6 @@ model TerminalLog {
   message    String
 }
 
-model Check {
-  id         String   @id @default(cuid())
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  startTime  DateTime
-  endTime    DateTime
-  weekStart  DateTime
-  trainer    User     @relation(fields: [trainerId], references: [id])
-  trainerId  String
-  terminal   Terminal @relation(fields: [terminalId], references: [id])
-  terminalId String
-  client     Client   @relation(fields: [clientId], references: [id])
-  clientId   String
-  event      Event    @relation(fields: [eventId], references: [id])
-  eventId    String
-}
-
 model Room {
   id               String   @id @default(cuid())
   createdAt        DateTime @default(now())
@@ -78,28 +60,33 @@ model Room {
   conflictsAllowed Boolean
   location         String
   users            User[]
-  events           Event[]
+  checks           Check[]
+  weeks            Week[]
 }
 
 model Week {
-  id        String   @id @default(cuid())
+  start     String   @id
   createdAt DateTime @default(now())
-  date      String
-  events    Event[]
+  checks    Check[]
+  rooms     Room[]
 }
 
-model Event {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-  startTime DateTime
-  endTime   DateTime
-  room      Room     @relation(fields: [roomId], references: [id])
-  roomId    String
-  checks    Check[]
-  trainer   User     @relation(fields: [trainerId], references: [id])
-  trainerId String
-  week      Week     @relation(fields: [weekId], references: [id])
-  weekId    String
+model Check {
+  id         String   @id @default(cuid())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  startTime  DateTime
+  endTime    DateTime
+  trainer    User     @relation(fields: [trainerId], references: [id])
+  trainerId  String
+  terminal   Terminal @relation(fields: [terminalId], references: [id])
+  terminalId String
+  client     Client   @relation(fields: [clientId], references: [id])
+  clientId   String
+  week       Week     @relation(fields: [weekStart], references: [start])
+  weekStart  String
+  room       Room     @relation(fields: [roomId], references: [id])
+  roomId     String
 }
 
 model Client {

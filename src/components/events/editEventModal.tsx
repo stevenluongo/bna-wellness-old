@@ -10,7 +10,6 @@ import { z } from "zod";
 import { api } from "~/utils/api";
 import { useSession } from "next-auth/react";
 import { useEffect, useMemo } from "react";
-import { Event } from "@prisma/client";
 
 type ModalProps = {
   open: boolean;
@@ -72,35 +71,6 @@ const EditEventModal = (props: ModalProps) => {
     });
   }, [props.timeslot, reset, props.roomId, user, terminal]);
 
-  const createEventMutation = api.events.create.useMutation({
-    async onSuccess(event) {
-      // cancel queries
-      await utils.rooms.id.cancel();
-      const freshRoom = await utils.rooms.id.getData({
-        id: props.roomId,
-      });
-      if (!freshRoom) return;
-
-      utils.rooms.id.setData(
-        { id: freshRoom.id },
-        {
-          ...freshRoom,
-          events: [...freshRoom.events, event],
-        }
-      );
-    },
-  });
-
-  const createEvent = (data: z.infer<typeof createEventValidationSchema>) => {
-    //need to parse the passed client id
-    data = {
-      ...data,
-      clientId: JSON.parse(data.clientId).id,
-    };
-    createEventMutation.mutate(data);
-    props.handleChange(false);
-  };
-
   return (
     <FormModal {...props}>
       <div className="w-full rounded-lg bg-white shadow dark:border dark:border-gray-700 dark:bg-gray-800  ">
@@ -108,10 +78,7 @@ const EditEventModal = (props: ModalProps) => {
           <h1 className="text-xl font-bold leading-tight tracking-tight text-gray-900 dark:text-white md:text-2xl">
             Create Event
           </h1>
-          <form
-            className="space-y-4 md:space-y-6"
-            onSubmit={handleSubmit(createEvent)}
-          >
+          <form className="space-y-4 md:space-y-6">
             <MomentLocalizationProvider>
               <div className="flex gap-4">
                 <ControlledTimePicker

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import moment, { Moment } from "moment";
+import { Moment } from "moment";
 import FormModal from "../modal/formModal";
 import { FormSubmit } from "../modal/formSubmit";
 import MomentLocalizationProvider from "../library/MomentLocalizationProvider";
@@ -9,16 +9,9 @@ import { useZodForm } from "~/utils/useZodForm";
 import { z } from "zod";
 import { api } from "~/utils/api";
 import { useSession } from "next-auth/react";
-import { useEffect, useMemo } from "react";
-import { useRouter } from "next/router";
-
-type ModalProps = {
-  open: boolean;
-  handleChange: (v: boolean) => void;
-  timeslot: Moment | null;
-  roomId: string;
-  weekStart: string;
-};
+import { FC, useCallback, useEffect, useMemo, useState } from "react";
+import { CreateCheckModalProps } from "./events";
+import { Client } from "@prisma/client";
 
 // validation schema is used by server
 export const createCheckValidationSchema = z.object({
@@ -31,7 +24,10 @@ export const createCheckValidationSchema = z.object({
   clientId: z.string(),
 });
 
-const CreateEventModal = (props: ModalProps) => {
+const CreateCheckModal: FC<CreateCheckModalProps> = (props) => {
+  const { timeslot, roomId, weekStart, handleChange } = props;
+  const [client, setClient] = useState<Client | null>(null);
+
   const { data: terminalData } = api.terminal.active.useQuery(undefined, {
     staleTime: 10000,
   });
@@ -49,71 +45,68 @@ const CreateEventModal = (props: ModalProps) => {
       try {
         await utils.weeks.id.cancel();
         const week = utils.weeks.id.getData({
-          weekStart: props.weekStart,
-          roomId: props.roomId,
+          weekStart,
+          roomId,
         });
         if (!week) {
           return;
         }
-        utils.weeks.id.setData(
-          { weekStart: props.weekStart, roomId: props.roomId },
-          {
-            ...week,
-            createdAt: new Date(),
-            checks: [
-              ...week.checks,
-              {
-                ...data,
-                id: `${Math.random()}`,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-              },
-            ],
-          }
-        );
+        const updatedWeek = {
+          ...week,
+          createdAt: new Date(),
+          checks: [
+            ...week.checks,
+            {
+              ...data,
+              clientId: data.clientId,
+              id: `${Math.random()}`,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+              client: client!,
+            },
+          ],
+        };
+        utils.weeks.id.setData({ weekStart, roomId }, updatedWeek);
       } catch (error) {
         console.error(error);
       }
     },
   });
 
-  const { reset, handleSubmit, control, formState } = useZodForm({
+  const generateDefaultValues = useCallback(() => {
+    return {
+      weekStart,
+      roomId,
+      startTime: timeslot?.toDate(),
+      endTime: timeslot?.clone().add(30, "minutes").toDate(),
+      trainerId: user.id,
+      terminalId: terminal.id,
+      clientId: "",
+    };
+  }, [weekStart, roomId, timeslot, user, terminal]);
+
+  const { reset, handleSubmit, control } = useZodForm({
     schema: createCheckValidationSchema,
     defaultValues: useMemo(() => {
-      return {
-        startTime: props.timeslot?.toDate(),
-        endTime: props.timeslot?.clone().add(30, "minutes").toDate(),
-        weekStart: props.weekStart,
-        roomId: props.roomId,
-        trainerId: user.id,
-        terminalId: terminal.id,
-        clientId: "",
-      };
-    }, [props.timeslot, props.roomId, user, terminal, props.weekStart]),
+      return generateDefaultValues();
+    }, [generateDefaultValues]),
   });
 
   // reset form when room changes
   useEffect(() => {
-    reset({
-      startTime: props.timeslot?.toDate(),
-      endTime: props.timeslot?.clone().add(30, "minutes").toDate(),
-      weekStart: props.weekStart,
-      roomId: props.roomId,
-      trainerId: user.id,
-      terminalId: terminal.id,
-      clientId: "",
-    });
-  }, [props.timeslot, reset, props.roomId, user, terminal, props.weekStart]);
+    reset(generateDefaultValues());
+  }, [generateDefaultValues, reset]);
 
   const createEvent = (data: z.infer<typeof createCheckValidationSchema>) => {
-    //need to parse the passed client id
+    setClient(JSON.parse(data.clientId));
     data = {
       ...data,
       clientId: JSON.parse(data.clientId).id,
     };
+    // create check
     createCheckMutation.mutate(data);
-    props.handleChange(false);
-    console.log(data);
+    // close modal
+    handleChange(false);
   };
 
   return (
@@ -160,4 +153,4 @@ const CreateEventModal = (props: ModalProps) => {
   );
 };
 
-export default CreateEventModal;
+export default CreateCheckModal;

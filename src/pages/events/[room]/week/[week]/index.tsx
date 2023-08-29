@@ -12,17 +12,19 @@ import {
   useCurrentWeek,
   useScheduleTimes,
 } from "~/utils/events";
-import CreateEventModal from "~/components/events/createEventModal";
+import CreateCheckModal from "~/components/events/createCheckModal";
 import EventTimeslot from "~/components/events/timeslots/EventTimeslot";
 import EmptyTimeslot from "~/components/events/timeslots/EmptyTimeslot";
 import { useIsMutating } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import EditEventModal from "~/components/events/editEventModal";
+import { Check } from "@prisma/client";
 
 const Events = () => {
   const [timeslotModalOpen, setTimeslotModalOpen] = useState(false);
   const [eventModalOpen, setEventModalOpen] = useState(false);
   const [currentTimeslot, setCurrentTimeslot] = useState<Moment | null>(null);
+  const [currentCheck, setCurrentCheck] = useState<Check | null>(null);
 
   const createWeekMutation = api.weeks.create.useMutation({
     async onMutate(data) {
@@ -78,9 +80,14 @@ const Events = () => {
     setCurrentTimeslot(null);
   };
 
-  const handleEventModalChange = (v: boolean) => {
-    setTimeslotModalOpen(v);
-    setCurrentTimeslot(null);
+  const openCheckModal = (check: Check) => {
+    setEventModalOpen(true);
+    setCurrentCheck(check);
+  };
+
+  const handleCheckModalChange = (v: boolean) => {
+    setEventModalOpen(v);
+    setCurrentCheck(null);
   };
 
   const utils = api.useContext();
@@ -162,7 +169,7 @@ const Events = () => {
                       <EventTimeslot
                         key={check.id}
                         check={check}
-                        handleClick={() => console.log(current)}
+                        handleClick={() => openCheckModal(check)}
                       />
                     );
                   }
@@ -184,20 +191,20 @@ const Events = () => {
           })}
         </tbody>
       </table>
-      <CreateEventModal
+      <CreateCheckModal
         open={timeslotModalOpen}
         handleChange={handleTimeslotModalChange}
         timeslot={currentTimeslot}
         roomId={room.id}
         weekStart={week.start}
       />
-      {/* <EditEventModal
+      <EditEventModal
         open={eventModalOpen}
-        handleChange={handleTimeslotModalChange}
-        timeslot={currentTimeslot}
-        event={currentEvent}
+        handleChange={handleCheckModalChange}
+        check={currentCheck}
         roomId={room.id}
-      /> */}
+        weekStart={week.start}
+      />
     </div>
   );
 };

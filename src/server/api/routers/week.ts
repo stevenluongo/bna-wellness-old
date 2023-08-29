@@ -34,6 +34,9 @@ export const weeksRouter = createTRPCRouter({
               where: {
                 roomId: input.roomId,
               },
+              include: {
+                client: true,
+              },
             },
           },
         });

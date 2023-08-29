@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { Moment } from "moment";
+import moment, { Moment } from "moment";
 import FormModal from "../modal/formModal";
 import { FormSubmit } from "../modal/formSubmit";
 import MomentLocalizationProvider from "../library/MomentLocalizationProvider";
@@ -9,24 +9,26 @@ import { useZodForm } from "~/utils/useZodForm";
 import { z } from "zod";
 import { api } from "~/utils/api";
 import { useSession } from "next-auth/react";
+import { useEffect, useMemo } from "react";
+import { useRouter } from "next/router";
 
 type ModalProps = {
   open: boolean;
   handleChange: (v: boolean) => void;
   timeslot: Moment | null;
   roomId: string;
+  weekStart: string;
 };
 
 // validation schema is used by server
-export const createEventValidationSchema = z.object({
+export const createCheckValidationSchema = z.object({
   startTime: z.date(),
   endTime: z.date(),
-  weekStart: z.date(),
+  weekStart: z.string(),
   roomId: z.string(),
   trainerId: z.string(),
   terminalId: z.string(),
   clientId: z.string(),
-  weekId: z.string(),
 });
 
 const CreateEventModal = (props: ModalProps) => {
@@ -40,9 +42,79 @@ const CreateEventModal = (props: ModalProps) => {
   const { data: session } = useSession();
   const user = session!.user;
 
-  const { reset, handleSubmit, control } = useZodForm({
-    schema: createEventValidationSchema,
+  const utils = api.useContext();
+
+  const createCheckMutation = api.checks.create.useMutation({
+    async onMutate(data) {
+      try {
+        await utils.weeks.id.cancel();
+        const week = utils.weeks.id.getData({
+          weekStart: props.weekStart,
+          roomId: props.roomId,
+        });
+        if (!week) {
+          return;
+        }
+        utils.weeks.id.setData(
+          { weekStart: props.weekStart, roomId: props.roomId },
+          {
+            ...week,
+            createdAt: new Date(),
+            checks: [
+              ...week.checks,
+              {
+                ...data,
+                id: `${Math.random()}`,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+              },
+            ],
+          }
+        );
+      } catch (error) {
+        console.error(error);
+      }
+    },
   });
+
+  const { reset, handleSubmit, control, formState } = useZodForm({
+    schema: createCheckValidationSchema,
+    defaultValues: useMemo(() => {
+      return {
+        startTime: props.timeslot?.toDate(),
+        endTime: props.timeslot?.clone().add(30, "minutes").toDate(),
+        weekStart: props.weekStart,
+        roomId: props.roomId,
+        trainerId: user.id,
+        terminalId: terminal.id,
+        clientId: "",
+      };
+    }, [props.timeslot, props.roomId, user, terminal, props.weekStart]),
+  });
+
+  // reset form when room changes
+  useEffect(() => {
+    reset({
+      startTime: props.timeslot?.toDate(),
+      endTime: props.timeslot?.clone().add(30, "minutes").toDate(),
+      weekStart: props.weekStart,
+      roomId: props.roomId,
+      trainerId: user.id,
+      terminalId: terminal.id,
+      clientId: "",
+    });
+  }, [props.timeslot, reset, props.roomId, user, terminal, props.weekStart]);
+
+  const createEvent = (data: z.infer<typeof createCheckValidationSchema>) => {
+    //need to parse the passed client id
+    data = {
+      ...data,
+      clientId: JSON.parse(data.clientId).id,
+    };
+    createCheckMutation.mutate(data);
+    props.handleChange(false);
+    console.log(data);
+  };
 
   return (
     <FormModal {...props}>
@@ -51,7 +123,10 @@ const CreateEventModal = (props: ModalProps) => {
           <h1 className="text-xl font-bold leading-tight tracking-tight text-gray-900 dark:text-white md:text-2xl">
             Create Event
           </h1>
-          <form className="space-y-4 md:space-y-6">
+          <form
+            className="space-y-4 md:space-y-6"
+            onSubmit={handleSubmit(createEvent)}
+          >
             <MomentLocalizationProvider>
               <div className="flex gap-4">
                 <ControlledTimePicker

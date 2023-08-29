@@ -18,15 +18,17 @@ export default function ControlledTimePicker({
     <Controller
       control={control}
       name={name}
-      render={({ field }) => (
-        <TimePicker
-          label={label}
-          disabled={disabled}
-          ampm
-          value={moment(field.value)}
-          onChange={(date) => date && field.onChange(date.toDate() as Date)}
-        />
-      )}
+      render={({ field }) => {
+        return (
+          <TimePicker
+            label={label}
+            disabled={disabled}
+            ampm
+            value={moment(field.value)}
+            onChange={(date) => date && field.onChange(date.toDate() as Date)}
+          />
+        );
+      }}
     />
   );
 }

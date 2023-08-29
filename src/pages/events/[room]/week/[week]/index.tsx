@@ -56,15 +56,6 @@ const Events = () => {
     }
   );
 
-  const { data: checks } = api.checks.week.useQuery(
-    {
-      weekStart: router.query.week as string,
-      roomId: router.query.room as string,
-    },
-    {
-      staleTime: 10000,
-    }
-  );
   const room = roomData!;
 
   const { data: session } = useSession();
@@ -72,7 +63,7 @@ const Events = () => {
 
   const scheduleTimes = useScheduleTimes(room);
   const blockedTimes = useBlockedTimes({
-    checks,
+    checks: week?.checks,
     trainerId: user.id,
   });
   const { dates: currentWeek } = useCurrentWeek();
@@ -160,7 +151,7 @@ const Events = () => {
                   // set the current date and time for this timeslot
                   const current = setMomentTime(date, time);
                   // find check for this timeslot
-                  const check = checks?.find(
+                  const check = week.checks?.find(
                     (c) =>
                       c.startTime.toISOString() === current.toISOString() &&
                       c.trainerId === user.id
@@ -170,8 +161,8 @@ const Events = () => {
                     return (
                       <EventTimeslot
                         key={check.id}
-                        // event={check}
-                        // handleClick={() => openEventModal(current, check)}
+                        check={check}
+                        handleClick={() => console.log(current)}
                       />
                     );
                   }
@@ -180,6 +171,7 @@ const Events = () => {
                     return null;
                   }
                   // if not blocked, render empty timeslot
+
                   return (
                     <EmptyTimeslot
                       key={current.toISOString()}
@@ -192,13 +184,14 @@ const Events = () => {
           })}
         </tbody>
       </table>
-      {/* <CreateEventModal
+      <CreateEventModal
         open={timeslotModalOpen}
         handleChange={handleTimeslotModalChange}
         timeslot={currentTimeslot}
         roomId={room.id}
+        weekStart={week.start}
       />
-      <EditEventModal
+      {/* <EditEventModal
         open={eventModalOpen}
         handleChange={handleTimeslotModalChange}
         timeslot={currentTimeslot}

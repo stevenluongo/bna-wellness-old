@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import moment, { Moment } from "moment";
+import { Moment } from "moment";
 import FormModal from "../modal/formModal";
 import { FormSubmit } from "../modal/formSubmit";
 import MomentLocalizationProvider from "../library/MomentLocalizationProvider";
@@ -9,8 +9,6 @@ import { useZodForm } from "~/utils/useZodForm";
 import { z } from "zod";
 import { api } from "~/utils/api";
 import { useSession } from "next-auth/react";
-import { useEffect, useMemo } from "react";
-import { useRouter } from "next/router";
 
 type ModalProps = {
   open: boolean;
@@ -42,47 +40,9 @@ const CreateEventModal = (props: ModalProps) => {
   const { data: session } = useSession();
   const user = session!.user;
 
-  const utils = api.useContext();
-
   const { reset, handleSubmit, control } = useZodForm({
     schema: createEventValidationSchema,
-    defaultValues: useMemo(() => {
-      return {
-        startTime: props.timeslot?.toDate(),
-        endTime: props.timeslot?.clone().add(30, "minutes").toDate(),
-        weekStart: moment().startOf("week").toDate(),
-        roomId: props.roomId,
-        trainerId: user.id,
-        terminalId: terminal.id,
-        clientId: "",
-      };
-    }, [props.timeslot, props.roomId, user, terminal]),
   });
-
-  // reset form when room changes
-  useEffect(() => {
-    reset({
-      startTime: props.timeslot?.toDate(),
-      endTime: props.timeslot?.clone().add(30, "minutes").toDate(),
-      weekStart: moment().startOf("week").toDate(),
-      roomId: props.roomId,
-      trainerId: user.id,
-      terminalId: terminal.id,
-      clientId: "",
-    });
-  }, [props.timeslot, reset, props.roomId, user, terminal]);
-
-  const createEvent = (data: z.infer<typeof createEventValidationSchema>) => {
-    // //need to parse the passed client id
-    // data = {
-    //   ...data,
-    //   clientId: JSON.parse(data.clientId).id,
-    //   weekId:
-    // };
-    // createEventMutation.mutate(data);
-    // props.handleChange(false);
-    console.log(data);
-  };
 
   return (
     <FormModal {...props}>
@@ -91,10 +51,7 @@ const CreateEventModal = (props: ModalProps) => {
           <h1 className="text-xl font-bold leading-tight tracking-tight text-gray-900 dark:text-white md:text-2xl">
             Create Event
           </h1>
-          <form
-            className="space-y-4 md:space-y-6"
-            onSubmit={handleSubmit(createEvent)}
-          >
+          <form className="space-y-4 md:space-y-6">
             <MomentLocalizationProvider>
               <div className="flex gap-4">
                 <ControlledTimePicker

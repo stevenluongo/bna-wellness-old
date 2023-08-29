@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import withAuth from "~/hocs/withAuth";
 import { api } from "~/utils/api";
-import { Moment } from "moment";
+import moment, { Moment } from "moment";
 import { ssgInit } from "~/server/ssg-init";
 import { useRouter } from "next/router";
 import { GetStaticPropsContext } from "next";
@@ -102,7 +102,7 @@ const Events = () => {
         roomId: router.query.room as string,
       });
     }
-  }, []);
+  }, [router.query.week]);
 
   useEffect(() => {
     // invalidate queries when mutations have settled
@@ -117,8 +117,28 @@ const Events = () => {
     return <p>no Week</p>;
   }
 
+  const handleWeekAfter = () =>
+    router.push(
+      `/events/${router.query.room}/week/${moment(router.query.week)
+        .add(7, "days")
+        .toISOString()}`
+    );
+
+  const handleWeekBefore = () =>
+    router.push(
+      `/events/${router.query.room}/week/${moment(router.query.week)
+        .subtract(7, "days")
+        .toISOString()}`
+    );
+
   return (
     <div>
+      <button className="bg-[red] p-8" onClick={handleWeekBefore}>
+        Back
+      </button>
+      <button className="bg-[blue] p-8" onClick={handleWeekAfter}>
+        Next
+      </button>
       <h1 className="mb-4 text-2xl">{room.location} Room</h1>
       <table className="table">
         <thead>
